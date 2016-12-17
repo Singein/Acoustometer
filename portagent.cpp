@@ -3,7 +3,7 @@
 PortAgent::PortAgent(QSerialPort *Port)
 {
     this->port = Port;
-    connect(port,SIGNAL(readyRead()),this,SLOT(OrderExcuted()));
+
 }
 
 PortAgent::PortAgent()
@@ -14,6 +14,7 @@ PortAgent::PortAgent()
 void PortAgent::setPort(QSerialPort *p)
 {
     this->port = p;
+    connect(port,SIGNAL(readyRead()),this,SLOT(OrderExcuted()));
 }
 
 PortAgent::~PortAgent()

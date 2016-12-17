@@ -28,8 +28,8 @@ class Widget : public QWidget
 public:
     explicit Widget(QWidget *parent = 0);
     ~Widget();
-    void portConnect();
-    void superShow();
+//    void portConnect();
+    void super_show();
 
 private:
     Ui::Widget *ui;
@@ -41,25 +41,26 @@ private:
      Settings *setDialog;
      DeviceParameter *deviceSettingDialog;
      QSerialPort *port;
-
-     int get_device_address();
-
      void initTable();
      void viewInit();
+     void filling_table(QStringList s);
+     void filling_table(QString s);
+     int get_device_address();
      bool isStarted;
 
 signals:
      void itemCheckStatusChanged(QString s);
+
 private slots:
      void initTree(QString s);
      void on_treeView_customContextMenuRequested(const QPoint &pos);
-     void settings_changed(QSerialPort *Port);
+     void port_setting_changed(QSerialPort *Port);
      void device_setting_changed(QString s);
      void setting_Dialog_Show();
      void device_setting_Dialog_Show();
      void start_and_stop_collecting();
-     void getDevicesList();
-     void currentIndexChanged(QModelIndex currentIndex);
+     void get_devices_list();
+     void current_index_changed(QModelIndex currentIndex);
      void read_history_data(QString s);
 };
 

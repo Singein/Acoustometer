@@ -12,15 +12,15 @@ Widget::Widget(QWidget *parent) :
     viewInit();
     setDialog = new Settings;
     deviceSettingDialog = new DeviceParameter;
-    portAgent = new PortAgent;
-    connect(deviceSettingDialog,SIGNAL(DeviceParameterChanged(QString)),this,SLOT(device_setting_changed(QString)));
-    connect(setDialog,SIGNAL(settingChanged(QSerialPort*)),this,SLOT(settings_changed(QSerialPort*)));
-    connect(ui->Button_start,SIGNAL(clicked()),this,SLOT(start_and_stop_collecting()));
-    connect(setDialog,SIGNAL(getCollectedDataList()),this,SLOT(getDevicesList()));
-    connect(ui->treeView,SIGNAL(clicked(QModelIndex)),this,SLOT(currentIndexChanged(QModelIndex)));
-    connect(portAgent,SIGNAL(addTreeNode(QString)),this,SLOT(initTree(QString)));
+    portAgent = new PortAgent; //port在 get_devices_list函数中获取，先进行无参的构造是为了下面的connect函数建立
+    connect(setDialog,SIGNAL(settingChanged(QSerialPort*)),this,SLOT(port_setting_changed(QSerialPort*))); //程序一运行，第一个触发的连接
+    connect(setDialog,SIGNAL(getCollectedDataList()),this,SLOT(get_devices_list()));//第二个触发的连接，并设置了portAgent的port参数
+    connect(deviceSettingDialog,SIGNAL(DeviceParameterChanged(QString)),this,SLOT(device_setting_changed(QString)));//当任意仪器的参数发生改变时触发
+    connect(ui->Button_start,SIGNAL(clicked()),this,SLOT(start_and_stop_collecting()));//实时数据采集 点击开始采集按钮后触发
+    connect(ui->treeView,SIGNAL(clicked(QModelIndex)),this,SLOT(current_index_changed(QModelIndex)));//当树状列表上的节点被点击后触发，用来限定操作逻辑
+    connect(portAgent,SIGNAL(addTreeNode(QString)),this,SLOT(initTree(QString)));//当有列表数据收到后触发
 //    connect(portAgent,SIGNAL(readInstanceData()),this,SLOT());
-    connect(this,SIGNAL(itemCheckStatusChanged(QString)),this,SLOT(read_history_data(QString)));
+    connect(this,SIGNAL(itemCheckStatusChanged(QString)),this,SLOT(read_history_data(QString)));//这个用来判断树状表中节点状态变化，槽函数 没想好怎么写
 }
 
 Widget::~Widget()
@@ -28,7 +28,7 @@ Widget::~Widget()
     delete ui;
 }
 
-void Widget::currentIndexChanged(QModelIndex currentIndex)
+void Widget::current_index_changed(QModelIndex currentIndex)
 {
     QStandardItem *currentItem = model->itemFromIndex(currentIndex);
     QString s = currentItem->text();
@@ -41,6 +41,7 @@ void Widget::currentIndexChanged(QModelIndex currentIndex)
     {
         ui->Button_import->hide();
         ui->Button_start->hide();
+        ui->label->setText("当前选中："+s);
     }
     if(s == "实时数据")
     {
@@ -52,6 +53,18 @@ void Widget::currentIndexChanged(QModelIndex currentIndex)
         ui->Button_start->hide();
         ui->Button_import->show();
     }
+
+    if(s.contains("-"))
+    {
+        ui->Button_start->hide();
+        ui->Button_import->show();
+    }
+
+    if(currentItem->checkState()==Qt::CheckState::Checked)
+    {
+        emit itemCheckStatusChanged(s);
+    }
+
 }
 
 void Widget::initTree(QString s)
@@ -93,23 +106,63 @@ void Widget::viewInit()
 {  
     this->setWindowTitle("声强检测仪");
     model = new QStandardItemModel (ui->treeView);
-    ui->treeView->setMaximumWidth(200);
+    ui->treeView->setMaximumWidth(250);
     devices = new QStandardItem("设备列表");
     devices->setEditable(false);
     ui->Button_import->hide();
     ui->Button_start->hide();
     ui->treeView->expandAll();
     //---------以下仅做测试-----------------
-
-    QStandardItem *item1 = new QStandardItem("历史数据");
+    QStandardItem *device = new QStandardItem("测量仪#1");
+    QStandardItem *instance_data = new QStandardItem("实时数据");
+    QStandardItem *history_data = new QStandardItem("历史数据");
+    QStandardItem *item1 = new QStandardItem("2016-12-17 12:11");
+    QStandardItem *item2 = new QStandardItem("2016-12-17 13:00");
+    QStandardItem *item3 = new QStandardItem("2016-12-17 13:11");
     item1->setCheckable(true);
-    devices->appendRow(item1);
+    item2->setCheckable(true);
+    item3->setCheckable(true);
 
+    history_data->setCheckable(true);
+    history_data->appendRow(item1);
+    history_data->appendRow(item2);
+    history_data->appendRow(item3);
+    device->appendRow(instance_data);
+    device->appendRow(history_data);
+    devices->appendRow(device);
     //-------------------------------
     model->appendRow(devices);
     ui->treeView->setModel(model);
     initTable();
     isStarted = false;
+}
+
+void Widget::filling_table(QStringList s)
+{
+    ui->tableWidget->clear();
+    initTable();
+    for(int i = 0;i<s.length();i++)
+    {
+        QStringList items = s.at(i).split(" ");
+        ui->tableWidget->setItem(i, 0, new QTableWidgetItem(items[0]));
+        ui->tableWidget->setItem(i, 1, new QTableWidgetItem(items[1]));
+        ui->tableWidget->setItem(i, 2, new QTableWidgetItem(items[2]));
+        ui->tableWidget->item(i, 0)->setTextAlignment(Qt::AlignHCenter);
+        ui->tableWidget->item(i, 1)->setTextAlignment(Qt::AlignHCenter);
+        ui->tableWidget->item(i, 2)->setTextAlignment(Qt::AlignHCenter);
+    }
+}
+
+void Widget::filling_table(QString s)
+{
+    QStringList items = s.split(" ");
+    int rowCount = ui->tableWidget->rowCount();
+    ui->tableWidget->setItem(rowCount, 0, new QTableWidgetItem(items[0]));
+    ui->tableWidget->setItem(rowCount, 1, new QTableWidgetItem(items[1]));
+    ui->tableWidget->setItem(rowCount, 2, new QTableWidgetItem(items[2]));
+    ui->tableWidget->item(rowCount, 0)->setTextAlignment(Qt::AlignHCenter);
+    ui->tableWidget->item(rowCount, 1)->setTextAlignment(Qt::AlignHCenter);
+    ui->tableWidget->item(rowCount, 2)->setTextAlignment(Qt::AlignHCenter);
 }
 
 void Widget::on_treeView_customContextMenuRequested(const QPoint &pos)
@@ -137,10 +190,10 @@ void Widget::on_treeView_customContextMenuRequested(const QPoint &pos)
 
 }
 
-void Widget::settings_changed(QSerialPort* Port)
+void Widget::port_setting_changed(QSerialPort* Port)
 {
     this->port = Port;
-    ui->label->setText(port->portName()+QString::number(port->baudRate())+" "+QString::number(port->dataBits())+" "+QString::number(port->stopBits()));
+    ui->label->setText(port->portName()+" "+QString::number(port->baudRate())+" "+QString::number(port->dataBits())+" "+QString::number(port->stopBits()));
 }
 
 void Widget::device_setting_changed(QString s)
@@ -194,15 +247,16 @@ void Widget::start_and_stop_collecting()
     }
 }
 
-void Widget::superShow()
+void Widget::super_show()
 {
     this->show();
     setDialog->show();
 }
 
-void Widget::getDevicesList()
+void Widget::get_devices_list()
 {
     portAgent->setPort(port);
+
     for(int i=1;i<=247;i++)
     {
         portAgent->GiveOrders(ORDER_SHOW_COLLECTED_DATA,i);
@@ -212,4 +266,5 @@ void Widget::getDevicesList()
 void Widget::read_history_data(QString s)
 {
     //查询相应的
+    ui->label->setText(s);
 }
