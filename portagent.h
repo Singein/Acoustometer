@@ -10,8 +10,7 @@
 #include <QObject>
 #include <QByteArray>
 #include <QSerialPort>
-
-
+#include <QThread>
 
 class PortAgent:public QObject
 {
@@ -23,6 +22,8 @@ public:
     void GiveOrders(int order,int id);
     void Set_Settings(QStringList Settings);
     QSerialPort *port;
+    QThread *OperateDataThread;
+    QThread *WriteDataBaseThread;
     void setPort(QSerialPort *P);
 
 private:

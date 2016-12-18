@@ -8,13 +8,16 @@ PortAgent::PortAgent(QSerialPort *Port)
 
 PortAgent::PortAgent()
 {
-
+    OperateDataThread = new QThread;
+    WriteDataBaseThread = new QThread;
 }
 
 void PortAgent::setPort(QSerialPort *p)
 {
     this->port = p;
+    moveToThread(OperateDataThread);
     connect(port,SIGNAL(readyRead()),this,SLOT(OrderExcuted()));
+    OperateDataThread->start();
 }
 
 PortAgent::~PortAgent()
@@ -44,10 +47,14 @@ void PortAgent::OrderExcuted()
     //第二部判断功能码+寄存器，如果功能码是用来读取历史数据时间组的，把解析后的数据以QString格式发送
     //emit addTreeNode(s);
 
+    moveToThread(WriteDataBaseThread);
+
     //如果是实时数据，往数据库里扔，扔完然后发信号
     //emit readInstanceData();
-
     //如果是历史数据，直接往数据库里扔
+
+    WriteDataBaseThread->start();
+
 }
 
 void PortAgent::Order_Show_Collected_Data(int id)
