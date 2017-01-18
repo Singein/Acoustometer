@@ -25,7 +25,7 @@ void DeviceParameter::buttonApply_clicked()
     QString s = "";
     s += QString::number(ui->spinBox_K->value()) + ",";
     s += QString::number(ui->doubleSpinBox_H->value()) + ",";
-    s += QString::number(ui->comboBox_G->currentIndex()) + ",";
+    s += QString::number(ui->comboBox_G->currentIndex()+1) + ",";
 
     if(ui->checkBox_F->isChecked())
         s += "1,";

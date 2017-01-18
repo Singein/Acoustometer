@@ -81,7 +81,7 @@ void Widget::initTree(QString s)
         QStandardItem *node = new QStandardItem(nodes.at(i));
         node->setEditable(false);
         node->setCheckable(true);
-        history_data->appendRow(device);
+        history_data->appendRow(node);
     }
     device->appendRow(instance_data);
     device->appendRow(history_data);
@@ -199,6 +199,7 @@ void Widget::port_setting_changed(QSerialPort* Port)
 void Widget::device_setting_changed(QString s)
 {
     ui->label->setText(s);
+    portAgent->GiveOrders(ORDER_CHANGE_SETTINGS,get_device_address());
 }
 
 void Widget::setting_Dialog_Show()
@@ -219,13 +220,14 @@ int Widget::get_device_address()
     QStandardItem *currentItem = model->itemFromIndex(currentIndex);
 
     int index = 0;
-    QString s = currentItem->parent()->text();
-//    if(s.contains("测量仪"))
-//        index = s.split("#").at(1).toInt();
-    if(s == "历史数据")
+    QString s = currentItem->text();
+    if(s.contains("测量仪"));
+    else
+        s = currentItem->parent()->text();
+    if(s == "历史数据"|| s == "实时数据")
         s = currentItem->parent()->parent()->text();
-
     index = s.split("#").at(1).toInt();
+//    ui->label->setText(QString::number(index));
     return index;
 }
 

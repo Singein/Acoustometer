@@ -7,10 +7,14 @@ Settings::Settings(QWidget *parent) :
     ui(new Ui::Settings)
 {
     ui->setupUi(this);
-    //    this->setMaximumSize(350,200);
-    //    this->setMinimumSize(350,200);
+//    this->setMaximumSize(400,200);
+//    this->setMinimumSize(400,200);
     setWindowModality(Qt::ApplicationModal);
     this->setWindowTitle("串口设置");
+    ui->comboBox_Baud->setCurrentIndex(7);
+    ui->comboBox_CheckBit->setCurrentIndex(1);
+    ui->comboBox_StopBit->setCurrentIndex(0);
+    ui->comboBox_DataBit->setCurrentIndex(3);
     port = new QSerialPort;
     serialStatus = false;
     PortScan();
