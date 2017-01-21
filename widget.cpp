@@ -259,6 +259,7 @@ void Widget::get_devices_list()
 {
     portAgent->setPort(port);
 
+    qDebug()<<"get_device_list_request";
     for(int i=1;i<=247;i++)
     {
         portAgent->GiveOrders(ORDER_SHOW_COLLECTED_DATA,i);

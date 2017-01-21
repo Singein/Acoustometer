@@ -59,6 +59,9 @@ void PortAgent::OrderExcuted()
 
 void PortAgent::Order_Show_Collected_Data(int id)
 {
+    QString test = "0103050000000000";
+    QByteArray s = QByteArray::fromHex(test.toLatin1().data());
+    port->write(s,s.length());
     //TODO: build the command message
     //TODO: sender->write(message)
 }
