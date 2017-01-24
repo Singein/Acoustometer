@@ -199,6 +199,7 @@ void Widget::port_setting_changed(QSerialPort* Port)
 void Widget::device_setting_changed(QString s)
 {
     ui->label->setText(s);
+    portAgent->Set_Settings(s);
     portAgent->GiveOrders(ORDER_CHANGE_SETTINGS,get_device_address());
 }
 
@@ -260,7 +261,7 @@ void Widget::get_devices_list()
     portAgent->setPort(port);
 
     qDebug()<<"get_device_list_request";
-    for(int i=1;i<=247;i++)
+    for(int i=1;i<=246;i++)
     {
         portAgent->GiveOrders(ORDER_SHOW_COLLECTED_DATA,i);
     }
