@@ -16,14 +16,17 @@ SOURCES += main.cpp\
         widget.cpp \
     portagent.cpp \
     settings.cpp \
-    deviceparameter.cpp
+    deviceparameter.cpp \
+    database.cpp
 
 HEADERS  += widget.h \
     portagent.h \
     settings.h \
-    deviceparameter.h
+    deviceparameter.h \
+    database.h
 
 FORMS    += widget.ui \
     settings.ui \
     deviceparameter.ui
 QT += serialport
+QT += sql

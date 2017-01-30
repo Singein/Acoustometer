@@ -10,6 +10,7 @@ Widget::Widget(QWidget *parent) :
 {
     ui->setupUi(this);
     viewInit();
+    groupCount = 0;
     setDialog = new Settings;
     deviceSettingDialog = new DeviceParameter;
     portAgent = new PortAgent; //port在 get_devices_list函数中获取，先进行无参的构造是为了下面的connect函数建立
@@ -18,7 +19,7 @@ Widget::Widget(QWidget *parent) :
     connect(deviceSettingDialog,SIGNAL(DeviceParameterChanged(QString)),this,SLOT(device_setting_changed(QString)));//当任意仪器的参数发生改变时触发
     connect(ui->Button_start,SIGNAL(clicked()),this,SLOT(start_and_stop_collecting()));//实时数据采集 点击开始采集按钮后触发
     connect(ui->treeView,SIGNAL(clicked(QModelIndex)),this,SLOT(current_index_changed(QModelIndex)));//当树状列表上的节点被点击后触发，用来限定操作逻辑
-    connect(portAgent,SIGNAL(addTreeNode(QString)),this,SLOT(initTree(QString)));//当有列表数据收到后触发
+    connect(portAgent,SIGNAL(addTreeNode(QStringList)),this,SLOT(initTree(QStringList)));//当有列表数据收到后触发
 //    connect(portAgent,SIGNAL(readInstanceData()),this,SLOT());
     connect(this,SIGNAL(itemCheckStatusChanged(QString)),this,SLOT(read_history_data(QString)));//这个用来判断树状表中节点状态变化，槽函数 没想好怎么写
 }
@@ -67,17 +68,30 @@ void Widget::current_index_changed(QModelIndex currentIndex)
 
 }
 
-void Widget::initTree(QString s)
+void Widget::initTree(QStringList nodes)
 {   
-    QStringList nodes = s.split(",");
+//    groupCount ++;
+
+//    int modId = nodes.at(0).toInt();
+//    int groups = nodes.at(2).toInt();
+//    int timeInterval = nodes.at(4).toInt();
+
+//    timeGroupTab[modId][0] ++;
+//    timeGroupTab[modId][1] = timeInterval;
+
+
+//    QDateTime time = QDateTime::fromString(nodes.at(1),"yyyy-MM-dd hh:mm:ss");
+
     QStandardItem *device = new QStandardItem("测量仪#"+nodes.at(0));
     QStandardItem *instance_data = new QStandardItem("实时数据");
     QStandardItem *history_data = new QStandardItem("历史数据");
     device->setEditable(false);
     instance_data->setEditable(false);
     history_data->setEditable(false);
+
     for(int i = 1;i < nodes.length();i++)
     {   
+
         QStandardItem *node = new QStandardItem(nodes.at(i));
         node->setEditable(false);
         node->setCheckable(true);

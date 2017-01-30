@@ -13,6 +13,8 @@
 #include <QByteArray>
 #include <QSerialPort>
 #include <QThread>
+#include <database.h>
+#include <QQueue>
 
 class PortAgent:public QObject
 {
@@ -26,6 +28,8 @@ public:
     QSerialPort *port;
     QThread *ReciveDataThread;
     QThread *OperateDataThread;
+    QQueue<QString> timequeue;
+    Database *DB;
     void setPort(QSerialPort *P);
 
 private:
@@ -43,11 +47,12 @@ private:
     QStringList Data_Selected(QByteArray rec);//某一编号时间组数据处理方法
     QStringList Data_Settings(QByteArray rec);//下位机当前参数数据处理方法
 
-    QString zero = "0";
+    QString zero;
     bool ok;
+
 signals:
     taskFinished(int order,QString s);
-    addTreeNode(QString s);
+    addTreeNode(QStringList s);
     readInstanceData();
 
 public slots:

@@ -16,7 +16,7 @@
 #include <portagent.h>
 #include <settings.h>
 #include <deviceparameter.h>
-#include <vector>
+
 namespace Ui {
 class Widget;
 }
@@ -29,7 +29,8 @@ public:
     explicit Widget(QWidget *parent = 0);
     ~Widget();
 //    void portConnect();
-    void super_show();
+    void super_show(); 
+
 
 private:
     Ui::Widget *ui;
@@ -47,12 +48,15 @@ private:
      void filling_table(QString s);
      int get_device_address();
      bool isStarted;
+     static int timeGroupTab[246][2];
+     int groupCount;
+
 
 signals:
      void itemCheckStatusChanged(QString s);
 
 private slots:
-     void initTree(QString s);
+     void initTree(QStringList nodes);
      void on_treeView_customContextMenuRequested(const QPoint &pos);
      void port_setting_changed(QSerialPort *Port);
      void device_setting_changed(QString s);
