@@ -44,12 +44,17 @@ private:
      QSerialPort *port;
      void initTable();
      void viewInit();
-     void filling_table(QStringList s);
-     void filling_table(QString s);
+     void fill_table_all(QStringList s);
+     void add_table_row(QStringList items);
      int get_device_address();
      bool isStarted;
      static int timeGroupTab[246][2];
      int groupCount;
+
+     QString current_modId;
+     bool isInstance;
+
+
 
 
 signals:
@@ -66,6 +71,7 @@ private slots:
      void get_devices_list();
      void current_index_changed(QModelIndex currentIndex);
      void read_history_data(QString s);
+     void update_instance_data(QStringList s);
 };
 
 #endif // WIDGET_H

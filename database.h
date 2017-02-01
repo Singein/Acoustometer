@@ -10,9 +10,10 @@ class Database
 public:
     Database();
     bool createConnection();
+    bool isTableExist(QString tableName);
     void createDataTable(QString tableName);
     void createTimeGroupTable();
-    void insertInstanceDataTable(QString tableName,QString frequency,QString soundStrength);
+    void insertInstanceDataTable(QString tableName,QDateTime time,QString frequency,QString soundStrength);
     void insertHistoryDataTable(QString tableName,QString time,QString frequency,QString soundStrength);
     bool insertTimeGroupTable(QStringList timeGroups);
     void updataTable(QString tableName,QString columnName,QString time,QString change);

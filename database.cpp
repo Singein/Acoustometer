@@ -25,15 +25,23 @@ bool Database::createConnection(){
     return true;
 }
 
+
+bool Database::isTableExist(QString tableName)
+{
+    db.open();
+    QSqlQuery query(db);
+    return query.exec(QString("select count(*) from sqlite_master where type='table' and name='%1'").arg(tableName));    //判断表是否存在
+}
+
 /*建立实时数据表*/
 void Database::createDataTable(QString tableName){
     db.open();
     QSqlQuery query(db);
-    bool isTableExist = query.exec(QString("select count(*) from sqlite_master where type='table' and name='%1'").arg(tableName));    //关键的判断
+    bool TableExist = isTableExist(tableName);    //判断表是否存在
     if(!db.open()){
         QMessageBox::critical(0,"Cannot open database","Unable to establish a database connection.",QMessageBox::Cancel);
     }
-    if(!isTableExist)
+    if(!TableExist)
         query.exec(QString("create table "+tableName+" (time varchar(30) primary key,frequency varchar(5),soundStrength varchar(3))")); //实时数据与历史数据
 
 }
@@ -49,10 +57,10 @@ void Database::createTimeGroupTable(){
 }
 
 /*插入实时数据*/
-void Database::insertInstanceDataTable(QString tableName,QString frequency,QString soundStrength){
+void Database::insertInstanceDataTable(QString tableName,QDateTime currentTime,QString frequency,QString soundStrength){
     db.open();
     QSqlQuery query(db);
-    QString time = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
+    QString time = currentTime.toString("yyyy-MM-dd hh:mm:ss");
     if(db.open()){
         query.exec(QString("insert into "+tableName+" values('"+time+"','"+frequency+"','"+soundStrength+"')"));
     }else{

@@ -13,6 +13,7 @@ PortAgent::PortAgent()
 {
     ReciveDataThread = new QThread;
     OperateDataThread = new QThread;
+    zero = "0";
     DB = new Database;
 //    DB->createTable();
 }
@@ -56,22 +57,29 @@ void PortAgent::GiveOrders(int order,int id)
 }
 
 void PortAgent::OrderExcuted()
-{
-    QByteArray data = port->readAll();
+{   
     moveToThread(OperateDataThread);
+    QByteArray data = port->readAll();
     int len = data.length();//下面就是根据不同的长度，调用不同的数据处理方法
     QByteArray noCRCCode = data.mid(0,len-2);
     QByteArray crc = data.mid(len-2,2);
     QByteArray crcCheck = QByteArray::number(qChecksum(QByteArray::fromHex(noCRCCode),len-2)).toUpper();
+
     if(crc == crcCheck)
     {
+        QStringList dataList;
         switch(len)
         {
-            case 21: Data_Instance(data);break;
+            case 21: {dataList = Data_Instance(data);
+                     QDateTime time = QDateTime::currentDateTime();
+                     DB->insertInstanceDataTable(dataList.at(0)+"_instance",time,dataList.at(1),dataList.at(2));
+                     dataList<<time.toString("yyyy-MM-dd hh:mm:ss");
+                     emit readInstanceData(dataList);
+                     break;}
             case 19: Data_Settings(data);break;
             case 17: DB->insertTimeGroupTable(Data_Collected(data));break;
-            case 9: QStringList s = Data_Selected(data);
-            DB->insertInstanceDataTable(s.at(0)+"_history",s.at(1),s.at(2));break;
+            case 9:  dataList = Data_Selected(data);
+                    /* DB->insertInstanceDataTable(s.at(0)+"_history",s.at(1),s.at(2));*/break;
         }
     }
 

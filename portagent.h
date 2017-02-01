@@ -31,6 +31,7 @@ public:
     QQueue<QString> timequeue;
     Database *DB;
     void setPort(QSerialPort *P);
+    bool isStarted;
 
 private:
     QString settings; //存储下位机要修改的参数设置
@@ -53,7 +54,7 @@ private:
 signals:
     taskFinished(int order,QString s);
     addTreeNode(QStringList s);
-    readInstanceData();
+    readInstanceData(QStringList data);
 
 public slots:
     void OrderExcuted();

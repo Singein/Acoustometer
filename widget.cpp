@@ -20,7 +20,7 @@ Widget::Widget(QWidget *parent) :
     connect(ui->Button_start,SIGNAL(clicked()),this,SLOT(start_and_stop_collecting()));//实时数据采集 点击开始采集按钮后触发
     connect(ui->treeView,SIGNAL(clicked(QModelIndex)),this,SLOT(current_index_changed(QModelIndex)));//当树状列表上的节点被点击后触发，用来限定操作逻辑
     connect(portAgent,SIGNAL(addTreeNode(QStringList)),this,SLOT(initTree(QStringList)));//当有列表数据收到后触发
-//    connect(portAgent,SIGNAL(readInstanceData()),this,SLOT());
+    connect(portAgent,SIGNAL(readInstanceData(QStringList)),this,SLOT(update_instance_data(QStringList)));//更新当前的实时数据
     connect(this,SIGNAL(itemCheckStatusChanged(QString)),this,SLOT(read_history_data(QString)));//这个用来判断树状表中节点状态变化，槽函数 没想好怎么写
 }
 
@@ -33,6 +33,7 @@ void Widget::current_index_changed(QModelIndex currentIndex)
 {
     QStandardItem *currentItem = model->itemFromIndex(currentIndex);
     QString s = currentItem->text();
+    isInstance = false;
     if(s == "设备列表")
     {
         ui->Button_import->hide();
@@ -42,12 +43,17 @@ void Widget::current_index_changed(QModelIndex currentIndex)
     {
         ui->Button_import->hide();
         ui->Button_start->hide();
+        current_modId = s.split("#").at(1);
         ui->label->setText("当前选中："+s);
     }
     if(s == "实时数据")
     {
         ui->Button_import->show();
         ui->Button_start->show();
+        if(portAgent->DB->isTableExist(QString::number(get_device_address())+"_instance"))
+            fill_table_all(portAgent->DB->queryDataTableAll(QString::number(get_device_address())+"_instance"));
+        isInstance = true;
+
     }
     if(s == "历史数据")
     {
@@ -127,23 +133,27 @@ void Widget::viewInit()
     ui->Button_start->hide();
     ui->treeView->expandAll();
     //---------以下仅做测试-----------------
-    QStandardItem *device = new QStandardItem("测量仪#1");
-    QStandardItem *instance_data = new QStandardItem("实时数据");
-    QStandardItem *history_data = new QStandardItem("历史数据");
-    QStandardItem *item1 = new QStandardItem("2016-12-17 12:11");
-    QStandardItem *item2 = new QStandardItem("2016-12-17 13:00");
-    QStandardItem *item3 = new QStandardItem("2016-12-17 13:11");
-    item1->setCheckable(true);
-    item2->setCheckable(true);
-    item3->setCheckable(true);
+    for(int i=1;i<10;i++)
+    {
+        QStandardItem *device = new QStandardItem("测量仪#"+QString::number(i));
+        QStandardItem *instance_data = new QStandardItem("实时数据");
+        QStandardItem *history_data = new QStandardItem("历史数据");
+        QStandardItem *item1 = new QStandardItem("2016-12-17 12:11");
+        QStandardItem *item2 = new QStandardItem("2016-12-17 13:00");
+        QStandardItem *item3 = new QStandardItem("2016-12-17 13:11");
+        item1->setCheckable(true);
+        item2->setCheckable(true);
+        item3->setCheckable(true);
 
-    history_data->setCheckable(true);
-    history_data->appendRow(item1);
-    history_data->appendRow(item2);
-    history_data->appendRow(item3);
-    device->appendRow(instance_data);
-    device->appendRow(history_data);
-    devices->appendRow(device);
+        history_data->setCheckable(true);
+        history_data->appendRow(item1);
+        history_data->appendRow(item2);
+        history_data->appendRow(item3);
+        device->appendRow(instance_data);
+        device->appendRow(history_data);
+        devices->appendRow(device);
+    }
+
     //-------------------------------
     model->appendRow(devices);
     ui->treeView->setModel(model);
@@ -151,7 +161,7 @@ void Widget::viewInit()
     isStarted = false;
 }
 
-void Widget::filling_table(QStringList s)
+void Widget::fill_table_all(QStringList s)
 {
     ui->tableWidget->clear();
     initTable();
@@ -167,16 +177,21 @@ void Widget::filling_table(QStringList s)
     }
 }
 
-void Widget::filling_table(QString s)
+void Widget::add_table_row(QStringList items)
 {
-    QStringList items = s.split(" ");
     int rowCount = ui->tableWidget->rowCount();
-    ui->tableWidget->setItem(rowCount, 0, new QTableWidgetItem(items[0]));
-    ui->tableWidget->setItem(rowCount, 1, new QTableWidgetItem(items[1]));
-    ui->tableWidget->setItem(rowCount, 2, new QTableWidgetItem(items[2]));
+    ui->tableWidget->setItem(rowCount, 0, new QTableWidgetItem(items[2]));
+    ui->tableWidget->setItem(rowCount, 1, new QTableWidgetItem(items[0]));
+    ui->tableWidget->setItem(rowCount, 2, new QTableWidgetItem(items[1]));
     ui->tableWidget->item(rowCount, 0)->setTextAlignment(Qt::AlignHCenter);
     ui->tableWidget->item(rowCount, 1)->setTextAlignment(Qt::AlignHCenter);
     ui->tableWidget->item(rowCount, 2)->setTextAlignment(Qt::AlignHCenter);
+}
+
+void Widget::update_instance_data(QStringList s)
+{
+    if(s.at(0) == current_modId && isInstance)
+        add_table_row(s);
 }
 
 void Widget::on_treeView_customContextMenuRequested(const QPoint &pos)
@@ -254,6 +269,10 @@ void Widget::start_and_stop_collecting()
         isStarted = false;
         ui->Button_start->setText("开始采集");
         ui->Button_import->setEnabled(true);
+
+
+
+
     }
     else
     {
@@ -286,3 +305,5 @@ void Widget::read_history_data(QString s)
     //查询相应的
     ui->label->setText(s);
 }
+
+
