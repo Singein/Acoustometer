@@ -16,6 +16,7 @@
 #include <portagent.h>
 #include <settings.h>
 #include <deviceparameter.h>
+#include <QMap>
 
 namespace Ui {
 class Widget;
@@ -30,6 +31,8 @@ public:
     ~Widget();
 //    void portConnect();
     void super_show(); 
+    QStandardItem* get_current_item();
+    QMap<QString,int> map;
 
 
 private:
@@ -46,7 +49,8 @@ private:
      void viewInit();
      void fill_table_all(QStringList s);
      void add_table_row(QStringList items);
-     int get_device_address();
+     int get_device_id();
+     QString get_device_id_toString();
      bool isStarted;
      static int timeGroupTab[246][2];
      int groupCount;

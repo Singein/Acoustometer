@@ -46,12 +46,12 @@ void Widget::current_index_changed(QModelIndex currentIndex)
         current_modId = s.split("#").at(1);
         ui->label->setText("当前选中："+s);
     }
-    if(s == "实时数据")
+    if(s.contains("实时数据"))
     {
         ui->Button_import->show();
         ui->Button_start->show();
-        if(portAgent->DB->isTableExist(QString::number(get_device_address())+"_instance"))
-            fill_table_all(portAgent->DB->queryDataTableAll(QString::number(get_device_address())+"_instance"));
+        if(portAgent->DB->isTableExist(QString::number(get_device_id())+"_instance"))
+            fill_table_all(portAgent->DB->queryDataTableAll(QString::number(get_device_id())+"_instance"));
         isInstance = true;
 
     }
@@ -59,6 +59,7 @@ void Widget::current_index_changed(QModelIndex currentIndex)
     {
         ui->Button_start->hide();
         ui->Button_import->show();
+        ui->Button_import->setEnabled(true);
     }
 
     if(s.contains("-"))
@@ -88,6 +89,8 @@ void Widget::initTree(QStringList nodes)
 
 //    QDateTime time = QDateTime::fromString(nodes.at(1),"yyyy-MM-dd hh:mm:ss");
 
+
+//    map->insert(nodes.at(0).toInt(),false);
     QStandardItem *device = new QStandardItem("测量仪#"+nodes.at(0));
     QStandardItem *instance_data = new QStandardItem("实时数据");
     QStandardItem *history_data = new QStandardItem("历史数据");
@@ -135,6 +138,7 @@ void Widget::viewInit()
     //---------以下仅做测试-----------------
     for(int i=1;i<10;i++)
     {
+        map.insert(QString::number(i),0);
         QStandardItem *device = new QStandardItem("测量仪#"+QString::number(i));
         QStandardItem *instance_data = new QStandardItem("实时数据");
         QStandardItem *history_data = new QStandardItem("历史数据");
@@ -159,6 +163,8 @@ void Widget::viewInit()
     ui->treeView->setModel(model);
     initTable();
     isStarted = false;
+
+
 }
 
 void Widget::fill_table_all(QStringList s)
@@ -229,7 +235,7 @@ void Widget::device_setting_changed(QString s)
 {
     ui->label->setText(s);
     portAgent->Set_Settings(s);
-    portAgent->GiveOrders(ORDER_CHANGE_SETTINGS,get_device_address());
+    portAgent->GiveOrders(ORDER_CHANGE_SETTINGS,get_device_id());
 }
 
 void Widget::setting_Dialog_Show()
@@ -239,16 +245,13 @@ void Widget::setting_Dialog_Show()
 
 void Widget::device_setting_Dialog_Show()
 {
-    deviceSettingDialog->setDeviceID(get_device_address());
+    deviceSettingDialog->setDeviceID(get_device_id());
     deviceSettingDialog->show();
 }
 
-int Widget::get_device_address()
+int Widget::get_device_id()
 {
-    QStandardItemModel *model = static_cast <QStandardItemModel*> (ui->treeView->model());
-    QModelIndex currentIndex = ui->treeView->currentIndex();
-    QStandardItem *currentItem = model->itemFromIndex(currentIndex);
-
+    QStandardItem *currentItem = get_current_item();
     int index = 0;
     QString s = currentItem->text();
     if(s.contains("测量仪"));
@@ -261,26 +264,47 @@ int Widget::get_device_address()
     return index;
 }
 
+QString Widget::get_device_id_toString()
+{
+
+    QStandardItem *currentItem = get_current_item();
+    int index = 0;
+    QString s = currentItem->text();
+    if(s.contains("测量仪"));
+    else
+        s = currentItem->parent()->text();
+    if(s == "历史数据"|| s == "实时数据")
+        s = currentItem->parent()->parent()->text();
+   return s.split("#").at(1);
+}
+
 void Widget::start_and_stop_collecting()
 {
 
-    if(isStarted)
+
+    if(map.value(get_device_id_toString())==1)
     {
-        isStarted = false;
         ui->Button_start->setText("开始采集");
+        map.insert(QString::number(get_device_id()),0);
         ui->Button_import->setEnabled(true);
-
-
-
-
+        get_current_item()->setText("实时数据");
     }
     else
     {
-        isStarted = true;
+        map.insert(QString::number(get_device_id()),1);
         ui->Button_start->setText("停止采集");
         ui->Button_import->setEnabled(false);
-        portAgent->GiveOrders(ORDER_START_COLLECTING,get_device_address());
+        get_current_item()->setText(get_current_item()->text()+" ==> 正在采集");
+        portAgent->GiveOrders(ORDER_START_COLLECTING,get_device_id());
     }
+}
+
+QStandardItem* Widget::get_current_item()
+{
+    QStandardItemModel *model = static_cast <QStandardItemModel*> (ui->treeView->model());
+    QModelIndex currentIndex = ui->treeView->currentIndex();
+    QStandardItem *currentItem = model->itemFromIndex(currentIndex);
+    return currentItem;
 }
 
 void Widget::super_show()
