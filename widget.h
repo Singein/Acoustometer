@@ -33,6 +33,7 @@ public:
     void super_show(); 
     QStandardItem* get_current_item();
     QMap<QString,int> map;
+    QMap<QString,int> *map_point;
 
 
 private:

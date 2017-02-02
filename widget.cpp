@@ -9,11 +9,13 @@ Widget::Widget(QWidget *parent) :
     ui(new Ui::Widget)
 {
     ui->setupUi(this);
+    map_point = &map;
     viewInit();
     groupCount = 0;
     setDialog = new Settings;
     deviceSettingDialog = new DeviceParameter;
     portAgent = new PortAgent; //port在 get_devices_list函数中获取，先进行无参的构造是为了下面的connect函数建立
+    portAgent->setMap(map_point);
     connect(setDialog,SIGNAL(settingChanged(QSerialPort*)),this,SLOT(port_setting_changed(QSerialPort*))); //程序一运行，第一个触发的连接
     connect(setDialog,SIGNAL(getCollectedDataList()),this,SLOT(get_devices_list()));//第二个触发的连接，并设置了portAgent的port参数
     connect(deviceSettingDialog,SIGNAL(DeviceParameterChanged(QString)),this,SLOT(device_setting_changed(QString)));//当任意仪器的参数发生改变时触发
@@ -53,6 +55,19 @@ void Widget::current_index_changed(QModelIndex currentIndex)
         if(portAgent->DB->isTableExist(QString::number(get_device_id())+"_instance"))
             fill_table_all(portAgent->DB->queryDataTableAll(QString::number(get_device_id())+"_instance"));
         isInstance = true;
+        if(s.contains("正在采集"))
+        {
+            ui->Button_start->setText("停止采集");
+            ui->Button_import->setEnabled(false);
+        }
+        else
+        {
+            ui->Button_start->setText("开始采集");
+            ui->Button_import->setEnabled(true);
+        }
+
+        /*-------------------------------------------------------------*/
+        qDebug()<<portAgent->map->value(get_device_id_toString());
 
     }
     if(s == "历史数据")
@@ -280,22 +295,20 @@ QString Widget::get_device_id_toString()
 
 void Widget::start_and_stop_collecting()
 {
-
-
-    if(map.value(get_device_id_toString())==1)
+    if(map.value(get_device_id_toString())==0)
     {
-        ui->Button_start->setText("开始采集");
-        map.insert(QString::number(get_device_id()),0);
-        ui->Button_import->setEnabled(true);
-        get_current_item()->setText("实时数据");
+        ui->Button_start->setText("停止采集");
+        map.insert(QString::number(get_device_id()),1);
+        ui->Button_import->setEnabled(false);
+        get_current_item()->setText("实时数据 ==> 正在采集");
+        portAgent->GiveOrders(ORDER_START_COLLECTING,get_device_id());
     }
     else
     {
-        map.insert(QString::number(get_device_id()),1);
-        ui->Button_start->setText("停止采集");
-        ui->Button_import->setEnabled(false);
-        get_current_item()->setText(get_current_item()->text()+" ==> 正在采集");
-        portAgent->GiveOrders(ORDER_START_COLLECTING,get_device_id());
+        map.insert(QString::number(get_device_id()),0);
+        ui->Button_start->setText("开始采集");
+        ui->Button_import->setEnabled(true);
+        get_current_item()->setText("实时数据");
     }
 }
 

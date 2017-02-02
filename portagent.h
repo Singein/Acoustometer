@@ -15,6 +15,7 @@
 #include <QThread>
 #include <database.h>
 #include <QQueue>
+#include <QMap>
 
 class PortAgent:public QObject
 {
@@ -32,6 +33,9 @@ public:
     Database *DB;
     void setPort(QSerialPort *P);
     bool isStarted;
+    void setMap(QMap<QString,int>* Map);
+    QMap<QString,int>* map;
+
 
 private:
     QString settings; //存储下位机要修改的参数设置
@@ -50,6 +54,7 @@ private:
 
     QString zero;
     bool ok;
+
 
 signals:
     taskFinished(int order,QString s);

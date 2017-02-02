@@ -68,16 +68,16 @@ void PortAgent::OrderExcuted()
     if(crc == crcCheck)
     {
         QStringList dataList;
-        switch(len)
+        switch(len) /*长度很关键，如果出现收不到数据的情况，仔细检查数据帧长度*/
         {
             case 21: {
                         dataList = Data_Instance(data);
-                        if(map->value(dataList.at(0)) == 1)
+                        if(map->value(dataList.at(0)) == 1)  //判断实时数据的采集开关状态
                         {
-                            QDateTime time = QDateTime::currentDateTime();
+                            QDateTime time = QDateTime::currentDateTime();//为了保证写入数据库的和界面实时更新的时间一致
                             DB->insertInstanceDataTable(dataList.at(0)+"_instance",time,dataList.at(1),dataList.at(2));
                             dataList<<time.toString("yyyy-MM-dd hh:mm:ss");
-                            emit readInstanceData(dataList);
+                            emit readInstanceData(dataList);//把存入数据库的时间同时发给主界面
                         }
                         break;
                      }
