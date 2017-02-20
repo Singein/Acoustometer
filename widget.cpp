@@ -45,7 +45,7 @@ void Widget::current_index_changed(QModelIndex currentIndex)
     {
         ui->Button_import->hide();
         ui->Button_start->hide();
-        current_modId = s.split("#").at(1);
+        current_modId = s.split(" ").at(1);
         ui->label->setText("当前选中："+s);
     }
     if(s.contains("实时数据"))
@@ -154,7 +154,7 @@ void Widget::viewInit()
     for(int i=1;i<10;i++)
     {
         map.insert(QString::number(i),0);
-        QStandardItem *device = new QStandardItem("测量仪#"+QString::number(i));
+        QStandardItem *device = new QStandardItem("测量仪 "+QString::number(i));
         QStandardItem *instance_data = new QStandardItem("实时数据");
         QStandardItem *history_data = new QStandardItem("历史数据");
         QStandardItem *item1 = new QStandardItem("2016-12-17 12:11");
@@ -164,7 +164,7 @@ void Widget::viewInit()
         item2->setCheckable(true);
         item3->setCheckable(true);
 
-        history_data->setCheckable(true);
+//        history_data->setCheckable(true);
         history_data->appendRow(item1);
         history_data->appendRow(item2);
         history_data->appendRow(item3);
@@ -274,7 +274,7 @@ int Widget::get_device_id()
         s = currentItem->parent()->text();
     if(s == "历史数据"|| s == "实时数据")
         s = currentItem->parent()->parent()->text();
-    index = s.split("#").at(1).toInt();
+    index = s.split(" ").at(1).toInt();
 //    ui->label->setText(QString::number(index));
     return index;
 }
@@ -290,7 +290,7 @@ QString Widget::get_device_id_toString()
         s = currentItem->parent()->text();
     if(s == "历史数据"|| s == "实时数据")
         s = currentItem->parent()->parent()->text();
-   return s.split("#").at(1);
+   return s.split(" ").at(1);
 }
 
 void Widget::start_and_stop_collecting()
