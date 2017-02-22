@@ -474,9 +474,9 @@ void PortAgent::Data_Instance(QByteArray data)
     if(map->value(dataList.at(0)) == 1)  //判断实时数据的采集开关状态
     {
         QDateTime time = QDateTime::currentDateTime();//为了保证写入数据库的和界面实时更新的时间一致
+        dataList<<time.toString("yyyy-MM-dd hh:mm:ss");        
         emit readInstanceData(dataList);//把存入数据库的时间同时发给主界面
         DB->insertInstanceDataTable(dataList.at(0)+"_instance",time,dataList.at(1),dataList.at(2));
-        dataList<<time.toString("yyyy-MM-dd hh:mm:ss");
     }
 }
 

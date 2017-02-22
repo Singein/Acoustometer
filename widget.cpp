@@ -8,10 +8,11 @@ Widget::Widget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Widget)
 {
+    qDebug()<<"当前线程ID:"<<QThread::currentThreadId();
     ui->setupUi(this);
     map_point = &map;
     viewInit();
-    groupCount = 0;
+//    groupCount = 0;
     setDialog = new Settings;
     deviceSettingDialog = new DeviceParameter;
     portAgent = new PortAgent; //port在 get_devices_list函数中获取，先进行无参的构造是为了下面的connect函数建立
@@ -24,6 +25,7 @@ Widget::Widget(QWidget *parent) :
     connect(portAgent,SIGNAL(addTreeNode(QStringList)),this,SLOT(initTree(QStringList)));//当有列表数据收到后触发
     connect(portAgent,SIGNAL(readInstanceData(QStringList)),this,SLOT(update_instance_data(QStringList)));//更新当前的实时数据
     connect(this,SIGNAL(itemCheckStatusChanged(QString)),this,SLOT(read_history_data(QString)));//这个用来判断树状表中节点状态变化，槽函数 没想好怎么写
+
 }
 
 Widget::~Widget()
@@ -45,7 +47,7 @@ void Widget::current_index_changed(QModelIndex currentIndex)
     {
         ui->Button_import->hide();
         ui->Button_start->hide();
-        current_modId = s.split(" ").at(1);
+//        current_modId = s.split(" ").at(1);
         ui->label->setText("当前选中："+s);
     }
     if(s.contains("实时数据"))
@@ -106,7 +108,7 @@ void Widget::initTree(QStringList nodes)
 
 
 //    map->insert(nodes.at(0).toInt(),false);
-    QStandardItem *device = new QStandardItem("测量仪#"+nodes.at(0));
+    QStandardItem *device = new QStandardItem("测量仪 "+nodes.at(0));
     QStandardItem *instance_data = new QStandardItem("实时数据");
     QStandardItem *history_data = new QStandardItem("历史数据");
     device->setEditable(false);
@@ -125,6 +127,8 @@ void Widget::initTree(QStringList nodes)
     device->appendRow(history_data);
     model->appendRow(devices);
     ui->treeView->setModel(model);
+
+    qDebug()<<"设备列表和设备时间组列表生成";
 }
 
 void Widget::initTable()
@@ -138,18 +142,12 @@ void Widget::initTable()
     ui->tableWidget->verticalHeader()->setVisible(false);
     ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     ui->tableWidget->horizontalHeader()->setSectionsMovable(true);
+
+    qDebug()<<"表格初始化成功";
 }
 
-void Widget::viewInit()
-{  
-    this->setWindowTitle("声强检测仪");
-    model = new QStandardItemModel (ui->treeView);
-    ui->treeView->setMaximumWidth(250);
-    devices = new QStandardItem("设备列表");
-    devices->setEditable(false);
-    ui->Button_import->hide();
-    ui->Button_start->hide();
-    ui->treeView->expandAll();
+void Widget::initTree_test()
+{
     //---------以下仅做测试-----------------
     for(int i=1;i<10;i++)
     {
@@ -163,7 +161,6 @@ void Widget::viewInit()
         item1->setCheckable(true);
         item2->setCheckable(true);
         item3->setCheckable(true);
-
 //        history_data->setCheckable(true);
         history_data->appendRow(item1);
         history_data->appendRow(item2);
@@ -172,14 +169,28 @@ void Widget::viewInit()
         device->appendRow(history_data);
         devices->appendRow(device);
     }
+    qDebug()<<"测试子结点生成";
+    //-----------------------------------------
+}
 
-    //-------------------------------
+void Widget::viewInit()
+{  
+    this->setWindowTitle("声强检测仪");
+    model = new QStandardItemModel (ui->treeView);
+    ui->treeView->setMaximumWidth(250);
+    devices = new QStandardItem("设备列表");
+    devices->setEditable(false);
+    ui->Button_import->hide();
+    ui->Button_start->hide(); 
+    //------------------------------------------------
+    qDebug()<<"-----------声强检测仪输出日志--------------";
+    qDebug()<<"树状列表根结点初始化成功";
+    initTree_test();
+
     model->appendRow(devices);
     ui->treeView->setModel(model);
     initTable();
-    isStarted = false;
-
-
+    qDebug()<<"界面初始化完毕";
 }
 
 void Widget::fill_table_all(QStringList s)
@@ -211,7 +222,7 @@ void Widget::add_table_row(QStringList items)
 
 void Widget::update_instance_data(QStringList s)
 {
-    if(s.at(0) == current_modId && isInstance)
+    if(s.at(0) == get_device_id_toString() && isInstance)
         add_table_row(s);
 }
 
@@ -329,12 +340,8 @@ void Widget::super_show()
 void Widget::get_devices_list()
 {
     portAgent->setPort(port);
-
-    qDebug()<<"get_device_list_request";
-    for(int i=1;i<=246;i++)
-    {
-        portAgent->GiveOrders(ORDER_SHOW_COLLECTED_DATA,i);
-    }
+    portAgent->GiveOrders(ORDER_GET_DEVICE_LIST,0);
+    qDebug()<<"获取设备列表请求已转交 port agent";
 }
 
 void Widget::read_history_data(QString s)

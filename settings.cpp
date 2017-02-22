@@ -1,6 +1,6 @@
 #include "settings.h"
 #include "ui_settings.h"
-
+#include <QDebug>
 
 Settings::Settings(QWidget *parent) :
     QWidget(parent),
@@ -12,7 +12,7 @@ Settings::Settings(QWidget *parent) :
     setWindowModality(Qt::ApplicationModal);
     this->setWindowTitle("串口设置");
     ui->comboBox_Baud->setCurrentIndex(7);
-    ui->comboBox_CheckBit->setCurrentIndex(1);
+    ui->comboBox_CheckBit->setCurrentIndex(2);
     ui->comboBox_StopBit->setCurrentIndex(0);
     ui->comboBox_DataBit->setCurrentIndex(3);
     port = new QSerialPort;
@@ -30,7 +30,9 @@ Settings::~Settings()
 void Settings::returnPort()
 {
     emit settingChanged(port);
+    qDebug()<<"串口连接完毕，串口指针已发送";
     emit getCollectedDataList();
+    qDebug()<<"获取列表请求已发送，即将初始化树状列表";
     this->close();
 }
 

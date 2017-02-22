@@ -32,7 +32,6 @@ private slots:
     void returnPort();
     void cancel();
     void connectPort();
-
 };
 
 #endif // SETTINGS_H

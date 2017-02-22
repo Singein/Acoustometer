@@ -1,8 +1,8 @@
 #ifndef WIDGET_H
 #define WIDGET_H
 
-#define ORDER_SHOW_COLLECTED_DATA 0
-#define ORDER_UPLOAD_COLLECTED_DATA 1
+#define ORDER_GET_DEVICE_LIST 0
+#define ORDER_UPLOAD_HISTORY_DATA 1
 #define ORDER_START_COLLECTING 2
 #define ORDER_STOP_COLLECTING 3
 #define ORDER_CHANGE_SETTINGS 4
@@ -30,53 +30,54 @@ public:
     explicit Widget(QWidget *parent = 0);
     ~Widget();
 //    void portConnect();
-    void super_show(); 
-    QStandardItem* get_current_item();
-    QMap<QString,int> map;
-    QMap<QString,int> *map_point;
+    void super_show();  //开始运行时弹出两个主窗口和串口设置窗口
+    QStandardItem* get_current_item(); //用来获取当前树状列表选中的item
+    QMap<QString,int> map;//每个设备的开关状态表
+    QMap<QString,int> *map_point;//上面的变量的指针，用来向portagent传参
 
 
 private:
     Ui::Widget *ui;
      QStandardItemModel *model;
-     QStandardItem *devices;
-     QAction *action_port_setting;
-     QAction *action_device_setting;
-     PortAgent *portAgent;
-     Settings *setDialog;
-     DeviceParameter *deviceSettingDialog;
-     QSerialPort *port;
-     void initTable();
-     void viewInit();
-     void fill_table_all(QStringList s);
-     void add_table_row(QStringList items);
-     int get_device_id();
-     QString get_device_id_toString();
-     bool isStarted;
-     static int timeGroupTab[246][2];
-     int groupCount;
+     QStandardItem *devices; //设备列表的item
+     QAction *action_port_setting;//串口的设置菜单
+     QAction *action_device_setting;//设备的参数设置菜单
+     PortAgent *portAgent;//很关键精髓的角色，与下位机的交互全部靠这个
+     Settings *setDialog;//串口设置的窗口
+     DeviceParameter *deviceSettingDialog;//参数设置窗口
+     QSerialPort *port;//串口
+     void initTable();//用来初始化表格
+     void viewInit();//用来初始化树状列表
+     void fill_table_all(QStringList s);//一整张表填充
+     void add_table_row(QStringList items);//一行一行填充
+     int get_device_id();//获取当前的设备的id
+     QString get_device_id_toString();//同上，区别是返回qstring
+     bool isInstance; //判断当前选中是否是在实时数据
 
-     QString current_modId;
-     bool isInstance;
+//     bool isStarted;//似乎没用了
+//     static int timeGroupTab[246][2];
+//     int groupCount;
+//     QString current_modId;
 
 
 
 
 signals:
-     void itemCheckStatusChanged(QString s);
+     void itemCheckStatusChanged(QString s); //当历史数据时间组选中状态改变的时候
 
 private slots:
-     void initTree(QStringList nodes);
-     void on_treeView_customContextMenuRequested(const QPoint &pos);
-     void port_setting_changed(QSerialPort *Port);
-     void device_setting_changed(QString s);
-     void setting_Dialog_Show();
-     void device_setting_Dialog_Show();
-     void start_and_stop_collecting();
-     void get_devices_list();
-     void current_index_changed(QModelIndex currentIndex);
-     void read_history_data(QString s);
-     void update_instance_data(QStringList s);
+     void initTree_test();
+     void initTree(QStringList nodes);//初始化树状列表
+     void on_treeView_customContextMenuRequested(const QPoint &pos);//右键菜单
+     void port_setting_changed(QSerialPort *Port);//串口设置改变
+     void device_setting_changed(QString s);//设备的设置改变
+     void setting_Dialog_Show();//显示串口设置列表
+     void device_setting_Dialog_Show();//显示设备设置列表
+     void start_and_stop_collecting();//开始和停止
+     void get_devices_list();//获取设备列表
+     void current_index_changed(QModelIndex currentIndex);//当前选中改变
+     void read_history_data(QString s);//读取历史数据
+     void update_instance_data(QStringList s);//更新实时数据
 };
 
 #endif // WIDGET_H

@@ -25,7 +25,6 @@ bool Database::createConnection(){
     return true;
 }
 
-
 bool Database::isTableExist(QString tableName)
 {
     db.open();
@@ -91,6 +90,7 @@ bool Database::insertTimeGroupTable(QStringList timeGroups){
         QMessageBox::critical(0,"Cannot open database","Unable to establish a database connection.",QMessageBox::Cancel);
         ok = false; //插入失败，返回false
     }
+    qDebug()<<"timegrop table insert ok";
     return ok;
 }
 
@@ -134,24 +134,31 @@ QStringList Database::queryDataTableAll(QString tableName){
 QStringList Database::getTimePoint(QString tableName){
     db.open();
     QSqlQuery query(db);
-    QString data0;
+    QString data;
+    QString data0 = "";
     QString data1;
-    QString data2;
-    QString data3;
     query.exec(QString("select * from "+tableName));
     QStringList list;
     while(query.next()){
-        data0 = query.value(0).toString();
-        data1 = query.value(1).toString();
-        data2 = query.value(2).toString();
-        data3 = query.value(3).toString();
-        data0.append(",");
-        data0.append(data1);
-        list<<data0;
+        if(data0 != query.value(0)){
+            data0 = query.value(0).toString();
+            data1 = query.value(1).toString();
+            data.append(data0);
+            data.append(",");
+            data.append(data1);
+        }else{
+            data1 = query.value(1).toString();
+            data.append(data1);
+        }
+
+//        data2 = query.value(2).toString();
+//        data3 = query.value(3).toString();
+//        data0.append(",");
+
+        list<<data;
     }
     return list;
 }
-
 
 /*查询时间组表中频率与声强*/
 QStringList Database::getTimePointInfo(QString tableName){
@@ -174,7 +181,6 @@ QStringList Database::getTimePointInfo(QString tableName){
     }
     return list;
 }
-
 
 /*查询实时时间表中某一条记录*/
 QString Database::queryDataTable(QString tableName,QString time){
