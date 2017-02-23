@@ -57,7 +57,7 @@ void PortAgent::GiveOrders(int order,int id)
     QStringList orders;
     switch (order) {
     case ORDER_GET_DEVICE_LIST:orders.append(Order_Get_Device_List(id));break;
-    case ORDER_UPLOAD_HISTORY_DATA:orders.append(Order_Upload_Selected_Data(id));break;
+    case ORDER_UPLOAD_HISTORY_DATA:orders.append(Order_Upload_History_Data(id));break;
     case ORDER_START_COLLECTING:Order_Start_Read_Instance(id);break;
     case ORDER_STOP_COLLECTING:Order_Stop_Read_Instance(id);break;
     case ORDER_CHANGE_SETTINGS:orders.append(Order_Change_Settings(id));break;
@@ -100,7 +100,7 @@ void PortAgent::OrderExcuted()
             case 0: Data_Instance(data);break;
             case 1: Data_History(data);break;
             case 2: Data_TimePoint(data);break;
-            case 3: Data_History(data);break;
+            case 3: Data_Settings(data);break;
         }
     }
     //TODO:operation the data
@@ -143,7 +143,7 @@ QString PortAgent::Order_Change_Settings(int id)
     qDebug()<<"MODID:"<<id<<" "<<"Order_Change_Settings Gived";
     //TODO: build the command message
     //TODO: sender->write(message)
-
+    qDebug()<<this->settings;
     QStringList settings = this->settings.split(",");
     QString modId = QString::number(id,16);
     QString year;
@@ -263,7 +263,7 @@ QStringList PortAgent::Order_Get_Device_List(int id)
      return CollectedOrder;
 }
 
-QStringList PortAgent::Order_Upload_Selected_Data(int id)
+QStringList PortAgent::Order_Upload_History_Data(int id)
 {
     qDebug()<<"MODID:"<<id<<" "<<"Order_Upload_Selected_Data Gived";
     //TODO: build the command message
@@ -474,9 +474,9 @@ void PortAgent::Data_Instance(QByteArray data)
     if(map->value(dataList.at(0)) == 1)  //判断实时数据的采集开关状态
     {
         QDateTime time = QDateTime::currentDateTime();//为了保证写入数据库的和界面实时更新的时间一致
+        dataList<<time.toString("yyyy-MM-dd hh:mm:ss");
         emit readInstanceData(dataList);//把存入数据库的时间同时发给主界面
         DB->insertInstanceDataTable(dataList.at(0)+"_instance",time,dataList.at(1),dataList.at(2));
-        dataList<<time.toString("yyyy-MM-dd hh:mm:ss");
     }
 }
 
@@ -492,7 +492,7 @@ void PortAgent::Data_TimePoint(QByteArray data)
 
 void PortAgent::Data_Settings(QByteArray data)
 {
-    Raw_Data_Settings(&data);
+    emit deviceParameter(Raw_Data_Settings(&data));
 }
 //----------------------------------------------------------------
 

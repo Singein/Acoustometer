@@ -41,7 +41,7 @@ private:
     QString Order_Get_Settings(int id);//获取当前下位机参数指令
     QString Order_Change_Settings(int id);//更改下位机参数指令
     QStringList Order_Get_Device_List(int id);//获取时间组列表数据
-    QStringList Order_Upload_Selected_Data(int id);//获取某一特定编号的时间组数据
+    QStringList Order_Upload_History_Data(int id);//获取某一特定编号的时间组数据
     QString Order_Read_Instance_Data(int id);//获取实时数据
     void Order_Start_Read_Instance(int id);//开始采集
     void Order_Stop_Read_Instance(int id);//停止采集
@@ -66,7 +66,8 @@ signals:
     taskFinished(int order,QString s);
     addTreeNode(QStringList s);
     readInstanceData(QStringList data);
-    enableTest();
+    deviceParameter(QStringList settings);
+
 public slots:
     void OrderExcuted();
 };

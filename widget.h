@@ -18,9 +18,12 @@
 #include <deviceparameter.h>
 #include <QMap>
 
+
 namespace Ui {
 class Widget;
 }
+
+
 
 class Widget : public QWidget
 {
@@ -34,6 +37,8 @@ public:
     QStandardItem* get_current_item(); //用来获取当前树状列表选中的item
     QMap<QString,int> map;//每个设备的开关状态表
     QMap<QString,int> *map_point;//上面的变量的指针，用来向portagent传参
+    PortAgent *portAgent;//很关键精髓的角色，与下位机的交互全部靠这个
+
 
 
 private:
@@ -42,7 +47,8 @@ private:
      QStandardItem *devices; //设备列表的item
      QAction *action_port_setting;//串口的设置菜单
      QAction *action_device_setting;//设备的参数设置菜单
-     PortAgent *portAgent;//很关键精髓的角色，与下位机的交互全部靠这个
+     QAction *action_start_stop_All;//用来一键开启或关闭所有设备的菜单
+     bool isAllDeviceWorking;
      Settings *setDialog;//串口设置的窗口
      DeviceParameter *deviceSettingDialog;//参数设置窗口
      QSerialPort *port;//串口
@@ -74,10 +80,12 @@ private slots:
      void setting_Dialog_Show();//显示串口设置列表
      void device_setting_Dialog_Show();//显示设备设置列表
      void start_and_stop_collecting();//开始和停止
+     void start_stop_all();
      void get_devices_list();//获取设备列表
      void current_index_changed(QModelIndex currentIndex);//当前选中改变
      void read_history_data(QString s);//读取历史数据
      void update_instance_data(QStringList s);//更新实时数据
+
 };
 
 #endif // WIDGET_H

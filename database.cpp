@@ -22,6 +22,7 @@ bool Database::createConnection(){
         QMessageBox::critical(0,"Cannot open database","Unable to establish a database connection.",QMessageBox::Cancel);
         return false;
     }
+    qDebug()<<"Data Base 已连接";
     return true;
 }
 
@@ -52,7 +53,8 @@ void Database::createTimeGroupTable(){
     if(!db.open()){
         QMessageBox::critical(0,"cannot open database","Unable to establish a database connect",QMessageBox::Cancel);
     }
-       query.exec(QString("create table timeGroup (id integer primary key autoincrement,modId int,timePoint varchar(30),groups int,interval varchar(5))")); //时间组表，主键为id
+    query.exec(QString("create table timeGroup (id integer primary key autoincrement,modId int,timePoint varchar(30),groups int,interval varchar(5))")); //时间组表，主键为id
+    qDebug()<<"TimeGroupTable 已建立";
 }
 
 /*插入实时数据*/
@@ -62,6 +64,7 @@ void Database::insertInstanceDataTable(QString tableName,QDateTime currentTime,Q
     QString time = currentTime.toString("yyyy-MM-dd hh:mm:ss");
     if(db.open()){
         query.exec(QString("insert into "+tableName+" values('"+time+"','"+frequency+"','"+soundStrength+"')"));
+        qDebug()<<"实时数据已插入 "<<tableName;
     }else{
         QMessageBox::critical(0,"Cannot open database","Unable to establish a database connection.",QMessageBox::Cancel);
     }

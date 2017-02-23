@@ -13,6 +13,7 @@ DeviceParameter::DeviceParameter(QWidget *parent) :
     setWindowModality(Qt::ApplicationModal);
     connect(ui->buttonApplay,SIGNAL(clicked()),this,SLOT(buttonApply_clicked()));
     connect(ui->buttonCancel,SIGNAL(clicked()),this,SLOT(buttonCancle_clicked()));
+    connect(Agent,SIGNAL(deviceParameter(QStringList)),this,SLOT(initView(QStringList)));
 }
 
 DeviceParameter::~DeviceParameter()
@@ -56,3 +57,25 @@ void DeviceParameter::setDeviceID(int id)
     this->device_ID = id;
     ui->label_ID->setText(QString::number(device_ID));
 }
+
+void DeviceParameter::sentAgent(PortAgent *agent)
+{
+    this->Agent = agent;
+}
+
+
+//目前这里缺点东西。。。等惠中改。。。------------------------------------------------------------------------
+
+void DeviceParameter::initView(QStringList Settings)
+{
+//    settings<<QString::number(kValue,10)<<QString::number(shift,10)
+//    <<QString::number(autoCloseTime,10)<<QString::number(connectFrqcyOnOff,10)
+//                                      <<QString::number(saveTimeInterval,10)<<QString::number(rangeMax,10);
+    ui->spinBox_K->setValue(Settings.at(0).toInt());
+    ui->doubleSpinBox_H->setValue(Settings.at(1).toDouble());
+//    ui->comboBox_G->setCurrentIndex(Settings.at(2).);
+
+
+}
+
+//还有一件事-----------------设置关闭窗口的ignore处理

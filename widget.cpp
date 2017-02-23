@@ -11,12 +11,13 @@ Widget::Widget(QWidget *parent) :
     qDebug()<<"当前线程ID:"<<QThread::currentThreadId();
     ui->setupUi(this);
     map_point = &map;
+    isAllDeviceWorking = false;
     viewInit();
-//    groupCount = 0;
     setDialog = new Settings;
     deviceSettingDialog = new DeviceParameter;
     portAgent = new PortAgent; //port在 get_devices_list函数中获取，先进行无参的构造是为了下面的connect函数建立
     portAgent->setMap(map_point);
+    deviceSettingDialog->sentAgent(portAgent);
     connect(setDialog,SIGNAL(settingChanged(QSerialPort*)),this,SLOT(port_setting_changed(QSerialPort*))); //程序一运行，第一个触发的连接
     connect(setDialog,SIGNAL(getCollectedDataList()),this,SLOT(get_devices_list()));//第二个触发的连接，并设置了portAgent的port参数
     connect(deviceSettingDialog,SIGNAL(DeviceParameterChanged(QString)),this,SLOT(device_setting_changed(QString)));//当任意仪器的参数发生改变时触发
@@ -25,7 +26,6 @@ Widget::Widget(QWidget *parent) :
     connect(portAgent,SIGNAL(addTreeNode(QStringList)),this,SLOT(initTree(QStringList)));//当有列表数据收到后触发
     connect(portAgent,SIGNAL(readInstanceData(QStringList)),this,SLOT(update_instance_data(QStringList)));//更新当前的实时数据
     connect(this,SIGNAL(itemCheckStatusChanged(QString)),this,SLOT(read_history_data(QString)));//这个用来判断树状表中节点状态变化，槽函数 没想好怎么写
-
 }
 
 Widget::~Widget()
@@ -108,16 +108,17 @@ void Widget::initTree(QStringList nodes)
 
 
 //    map->insert(nodes.at(0).toInt(),false);
-    QStandardItem *device = new QStandardItem("测量仪 "+nodes.at(0));
-    QStandardItem *instance_data = new QStandardItem("实时数据");
-    QStandardItem *history_data = new QStandardItem("历史数据");
+    QStandardItem *device = new QStandardItem("测量仪 "+nodes.at(0)); //这条是id，设备
+    map.insert(nodes.at(0),0);
+    QStandardItem *instance_data = new QStandardItem("实时数据");//这条是实时数据
+    QStandardItem *history_data = new QStandardItem("历史数据");//这条是历史数据
     device->setEditable(false);
     instance_data->setEditable(false);
     history_data->setEditable(false);
 
     for(int i = 1;i < nodes.length();i++)
     {   
-
+        //逐条添加历史数据时间点
         QStandardItem *node = new QStandardItem(nodes.at(i));
         node->setEditable(false);
         node->setCheckable(true);
@@ -125,8 +126,8 @@ void Widget::initTree(QStringList nodes)
     }
     device->appendRow(instance_data);
     device->appendRow(history_data);
-    model->appendRow(devices);
-    ui->treeView->setModel(model);
+    model->appendRow(devices);//刷新modle
+    ui->treeView->setModel(model);//刷新treeview
 
     qDebug()<<"设备列表和设备时间组列表生成";
 }
@@ -149,7 +150,7 @@ void Widget::initTable()
 void Widget::initTree_test()
 {
     //---------以下仅做测试-----------------
-    for(int i=1;i<10;i++)
+    for(int i=1;i<247;i++)
     {
         map.insert(QString::number(i),0);
         QStandardItem *device = new QStandardItem("测量仪 "+QString::number(i));
@@ -232,13 +233,26 @@ void Widget::on_treeView_customContextMenuRequested(const QPoint &pos)
     QModelIndex currentIndex = ui->treeView->currentIndex();
     QStandardItem *currentItem = model->itemFromIndex(currentIndex);
     action_port_setting = new QAction("串口设置");
-    action_device_setting= new QAction("仪器设置");
+    action_device_setting = new QAction("仪器设置");
+    action_start_stop_All = new QAction;
     connect(action_port_setting,SIGNAL(triggered(bool)),this,SLOT(setting_Dialog_Show()));
     connect(action_device_setting,SIGNAL(triggered(bool)),this,SLOT(device_setting_Dialog_Show()));
+    connect(action_start_stop_All,SIGNAL(triggered(bool)),this,SLOT(start_stop_all()));
     if(currentItem->text() == "设备列表")
     {
         QMenu *popMenu =new QMenu(this);//定义一个右键弹出菜单
+        if(!isAllDeviceWorking)
+        {
+            action_start_stop_All->setText("全部设备开始采集");
+//            isAllDeviceWorking = true;
+        }
+        else
+        {
+            action_start_stop_All->setText("全部设备停止采集");
+//            isAllDeviceWorking = false;
+        }
         popMenu->addAction(action_port_setting);//往菜单内添加QAction
+        popMenu->addAction(action_start_stop_All);
         popMenu->exec(QCursor::pos());//弹出右键菜单，菜单位置为光标位置
     }
 
@@ -272,6 +286,7 @@ void Widget::setting_Dialog_Show()
 void Widget::device_setting_Dialog_Show()
 {
     deviceSettingDialog->setDeviceID(get_device_id());
+    portAgent->GiveOrders(ORDER_GET_SETTINGS,get_device_id());
     deviceSettingDialog->show();
 }
 
@@ -320,6 +335,37 @@ void Widget::start_and_stop_collecting()
         ui->Button_start->setText("开始采集");
         ui->Button_import->setEnabled(true);
         get_current_item()->setText("实时数据");
+    }
+}
+
+void Widget::start_stop_all()
+{
+    if(!isAllDeviceWorking)
+    {
+        ui->treeView->expand(ui->treeView->currentIndex());
+        for (QMap<QString, int>::const_iterator it = map.cbegin(), end = map.cend(); it != end; ++it) {
+            map.insert(it.key(),1);
+         }
+
+       for(int i=0;i<devices->rowCount();i++)
+       {
+            QStandardItem *currentItem = devices->child(i);
+            ui->treeView->expand(ui->treeView->currentIndex().child(i,0));
+            currentItem->child(0)->setText("实时数据 ==> 正在采集");
+       }
+        isAllDeviceWorking = true;
+    }
+    else
+    {
+        for (QMap<QString, int>::const_iterator it = map.cbegin(), end = map.cend(); it != end; ++it) {
+            map.insert(it.key(),0);
+         }
+        for(int i=0;i<devices->rowCount();i++)
+        {
+             QStandardItem *currentItem = devices->child(i);
+             currentItem->child(0)->setText("实时数据");
+        }
+        isAllDeviceWorking = false;
     }
 }
 
