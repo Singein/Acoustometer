@@ -17,7 +17,7 @@
 #include <settings.h>
 #include <deviceparameter.h>
 #include <QMap>
-
+#include <toexcel.h>
 
 namespace Ui {
 class Widget;
@@ -85,6 +85,7 @@ private slots:
      void current_index_changed(QModelIndex currentIndex);//当前选中改变
      void read_history_data(QString s);//读取历史数据
      void update_instance_data(QStringList s);//更新实时数据
+     void import_to_excel();
 
 };
 

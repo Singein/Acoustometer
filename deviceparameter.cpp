@@ -13,7 +13,6 @@ DeviceParameter::DeviceParameter(QWidget *parent) :
     setWindowModality(Qt::ApplicationModal);
     connect(ui->buttonApplay,SIGNAL(clicked()),this,SLOT(buttonApply_clicked()));
     connect(ui->buttonCancel,SIGNAL(clicked()),this,SLOT(buttonCancle_clicked()));
-    connect(Agent,SIGNAL(deviceParameter(QStringList)),this,SLOT(initView(QStringList)));
 }
 
 DeviceParameter::~DeviceParameter()
@@ -61,6 +60,7 @@ void DeviceParameter::setDeviceID(int id)
 void DeviceParameter::sentAgent(PortAgent *agent)
 {
     this->Agent = agent;
+    connect(Agent,SIGNAL(deviceParameter(QStringList)),this,SLOT(initView(QStringList)));
 }
 
 

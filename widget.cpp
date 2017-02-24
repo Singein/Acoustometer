@@ -22,6 +22,7 @@ Widget::Widget(QWidget *parent) :
     connect(setDialog,SIGNAL(getCollectedDataList()),this,SLOT(get_devices_list()));//第二个触发的连接，并设置了portAgent的port参数
     connect(deviceSettingDialog,SIGNAL(DeviceParameterChanged(QString)),this,SLOT(device_setting_changed(QString)));//当任意仪器的参数发生改变时触发
     connect(ui->Button_start,SIGNAL(clicked()),this,SLOT(start_and_stop_collecting()));//实时数据采集 点击开始采集按钮后触发
+    connect(ui->Button_import,SIGNAL(clicked()),this,SLOT(import_to_excel()));
     connect(ui->treeView,SIGNAL(clicked(QModelIndex)),this,SLOT(current_index_changed(QModelIndex)));//当树状列表上的节点被点击后触发，用来限定操作逻辑
     connect(portAgent,SIGNAL(addTreeNode(QStringList)),this,SLOT(initTree(QStringList)));//当有列表数据收到后触发
     connect(portAgent,SIGNAL(readInstanceData(QStringList)),this,SLOT(update_instance_data(QStringList)));//更新当前的实时数据
@@ -396,4 +397,8 @@ void Widget::read_history_data(QString s)
     ui->label->setText(s);
 }
 
-
+void Widget::import_to_excel()
+{
+    ToExcel *toexcel = new ToExcel;
+    toexcel->show();
+}

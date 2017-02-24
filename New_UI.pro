@@ -17,16 +17,20 @@ SOURCES += main.cpp\
     portagent.cpp \
     settings.cpp \
     deviceparameter.cpp \
-    database.cpp
+    database.cpp \
+    toexcel.cpp
 
 HEADERS  += widget.h \
     portagent.h \
     settings.h \
     deviceparameter.h \
-    database.h
+    database.h \
+    toexcel.h
 
 FORMS    += widget.ui \
     settings.ui \
-    deviceparameter.ui
+    deviceparameter.ui \
+    toexcel.ui
 QT += serialport
 QT += sql
+QT += axcontainer
