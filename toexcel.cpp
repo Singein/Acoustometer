@@ -1,5 +1,6 @@
 #include "toexcel.h"
 #include "ui_toexcel.h"
+#include <QDebug>
 
 ToExcel::ToExcel(QWidget *parent) :
     QWidget(parent),
@@ -16,6 +17,7 @@ ToExcel::ToExcel(QWidget *parent) :
     this->setMinimumSize(300,100);
     connect(this,SIGNAL(current_progress(double)),this,SLOT(set_progressBar_value(double)));
     connect(ui->progressBar,SIGNAL(valueChanged(int)),this,SLOT(progressBar_finished(int)));
+    connect(this,SIGNAL(show_time()),this,SLOT(time_to_show()));
 }
 
 ToExcel::~ToExcel()
@@ -26,6 +28,7 @@ ToExcel::~ToExcel()
 
 void ToExcel::Import(QString filename, QStringList data)
 {
+    qDebug()<<"import called";
     QString fileName = QFileDialog::getSaveFileName(this,"选择保存的路径",filename,"Microsoft Office (*.xls)");//获取保存路径
 
     if (fileName.isEmpty()) {
@@ -34,16 +37,17 @@ void ToExcel::Import(QString filename, QStringList data)
     }
 
     //建立Excel对象
+    emit show_time();
     QAxObject *excel = new QAxObject("Excel.Application");
     excel->dynamicCall("SetVisible(bool)", false); //如果为了看自己的程序到底怎样工作，可以设置为true
 
-    excel->setProperty("Visible", true);
+    excel->setProperty("Visible", false);
     QAxObject *workbooks = excel->querySubObject("WorkBooks");
     workbooks->dynamicCall("Add");
     QAxObject *workbook = excel->querySubObject("ActiveWorkBook");
     QAxObject *worksheet = workbook->querySubObject("Worksheets(int)", 1);
 
-    for(int i=1;i<=data.length();i++)
+    for(int i=1;i<=data.length()+1;i++)
     {
         for(int j=1;j<=3;j++)
         {
@@ -58,9 +62,9 @@ void ToExcel::Import(QString filename, QStringList data)
                     range->setProperty("Value", "频率");
             }
             else
-                range->setProperty("Value", data.at(i).split(",").at(j-1));
+                range->setProperty("Value", data.at(i-2).split(",").at(j-1));
         }
-        emit current_progress(i/data.length());
+        emit current_progress(((double)i)/((double)data.length()));
     }
 //    QAxObject *range = worksheet->querySubObject("Cells(int,int)", 1,1);//row  column为要插入的行和列
 //    range->setProperty("Value", "12324324"); //此处写要插入的内容
@@ -73,11 +77,17 @@ void ToExcel::Import(QString filename, QStringList data)
 
 void ToExcel::set_progressBar_value(double i)
 {
-    ui->progressBar->setValue((int)i*100);
+    ui->progressBar->setValue((int)(i*100));
+    qDebug()<<ui->progressBar->value();
 }
 
 void ToExcel::progressBar_finished(int i)
 {
     if(i == 100)
         this->close();
+}
+
+void ToExcel::time_to_show()
+{
+    this->show();
 }

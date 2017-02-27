@@ -23,6 +23,7 @@ public:
 
 signals:
     void current_progress(double progress);
+    void show_time();
 
 private:
     Ui::ToExcel *ui;
@@ -30,6 +31,7 @@ private:
 private slots:
     void set_progressBar_value(double i);
     void progressBar_finished(int i);
+    void time_to_show();
 };
 
 #endif // TOEXCEL_H

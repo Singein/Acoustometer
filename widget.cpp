@@ -136,7 +136,7 @@ void Widget::initTree(QStringList nodes)
 void Widget::initTable()
 {
     ui->tableWidget->setColumnCount(3);
-    ui->tableWidget->setRowCount(0);
+    ui->tableWidget->setRowCount(1);
     QStringList tableHeader;
     tableHeader <<"日期/时间"<<"声强值(W/CM2)"<<"频率(KHz)";
     ui->tableWidget->setHorizontalHeaderLabels(tableHeader);
@@ -144,7 +144,15 @@ void Widget::initTable()
     ui->tableWidget->verticalHeader()->setVisible(false);
     ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     ui->tableWidget->horizontalHeader()->setSectionsMovable(true);
+    //----------------------测试--------------------------
+    QStringList items;
+    items<<"2017-2-27 12:18:56"<<"23"<<"56";
+    for(int i=0;i<20;i++)
+    {
 
+        add_table_row(items);
+    }
+    //-----------------------------------------------------
     qDebug()<<"表格初始化成功";
 }
 
@@ -213,13 +221,16 @@ void Widget::fill_table_all(QStringList s)
 
 void Widget::add_table_row(QStringList items)
 {
-    int rowCount = ui->tableWidget->rowCount();
-    ui->tableWidget->setItem(rowCount, 0, new QTableWidgetItem(items[2]));
-    ui->tableWidget->setItem(rowCount, 1, new QTableWidgetItem(items[0]));
-    ui->tableWidget->setItem(rowCount, 2, new QTableWidgetItem(items[1]));
+    int rowCount = ui->tableWidget->rowCount()-1;
+    qDebug()<<"成功调用add_table_row!";
+    ui->tableWidget->setItem(rowCount, 0, new QTableWidgetItem(items.at(0)));
+    ui->tableWidget->setItem(rowCount, 1, new QTableWidgetItem(items.at(1)));
+    ui->tableWidget->setItem(rowCount, 2, new QTableWidgetItem(items.at(2)));
+    qDebug()<<ui->tableWidget->rowCount();
     ui->tableWidget->item(rowCount, 0)->setTextAlignment(Qt::AlignHCenter);
     ui->tableWidget->item(rowCount, 1)->setTextAlignment(Qt::AlignHCenter);
     ui->tableWidget->item(rowCount, 2)->setTextAlignment(Qt::AlignHCenter);
+    ui->tableWidget->setRowCount(rowCount+2);
 }
 
 void Widget::update_instance_data(QStringList s)
@@ -399,6 +410,24 @@ void Widget::read_history_data(QString s)
 
 void Widget::import_to_excel()
 {
+    qDebug()<<"import_to_excel called！";
+    qDebug()<<ui->tableWidget->rowCount();
+    QStringList datalist;
+
+
+    for(int i=0;i<ui->tableWidget->rowCount()-1;i++)
+    {
+        QString s="";
+        for(int j=0;j<3;j++)
+        {
+//            if(j==2)
+//                s += ui->tableWidget->item(i,j)->text();
+//            else
+                s += (ui->tableWidget->item(i,j)->text()+",");
+        }
+        datalist.append(s);
+    }
+    qDebug()<<datalist.at(0);
     ToExcel *toexcel = new ToExcel;
-    toexcel->show();
+    toexcel->Import(get_device_id_toString()+QDateTime::currentDateTime().toString("yyMMddhhmmss"),datalist);
 }
