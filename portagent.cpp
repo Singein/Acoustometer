@@ -1,19 +1,17 @@
 #include "portagent.h"
 #include "QDebug"
+#include "crccheck.h"
 
 PortAgent::PortAgent(QSerialPort *Port)
 {
     this->port = Port;
-    zero = "0";
     DB = new Database;
-
 }
 
 PortAgent::PortAgent()
 {
     ReciveDataThread = new QThread;
     OperateDataThread = new QThread;
-    zero = "0";
     DB = new Database;
     qDebug()<<"当前线程ID:"<<QThread::currentThreadId()<<" port agent 已就位";
 //    DB->createTable();
@@ -23,7 +21,6 @@ void PortAgent::setPort(QSerialPort *p)
 {
     this->port = p;
     qDebug()<<"port agent 已接管串口";
-    zero = "0";
     qDebug()<<"当前线程ID:"<<QThread::currentThreadId();
     moveToThread(ReciveDataThread);
     qDebug()<<"正在移交至新线程";
@@ -74,33 +71,37 @@ void PortAgent::GiveOrders(int order,int id)
         port->write(order,order.length());
         qDebug()<<order.toHex().data();
     }
-
-
 }
 
 void PortAgent::OrderExcuted()
 {
 //    isDataRecived->stop();
+    bool ok;
     qDebug()<<"当前线程ID:"<<QThread::currentThreadId();
     QByteArray data = port->readAll();
     qDebug() << "----volum machine: data recived!"<<" data length: "<<data.length()<<" bytes";
     int len = data.length();//下面就是根据不同的长度，调用不同的数据处理方法 
-    QByteArray noCRCCode = data.mid(0,len-2);
+//    QByteArray noCRCCode = data.mid(0,len-2);
+    CrcCheck *crcg = new CrcCheck();
     QByteArray crc = data.mid(len-2,2);
-    QByteArray crcCheck = QByteArray::number(qChecksum(QByteArray::fromHex(noCRCCode),len-2)).toUpper();  
+    QString crcCheck = crcg->crcChecksix(data.mid(0,len-2));
+//    QByteArray crcCheck = QByteArray::number(qChecksum(QByteArray::fromHex(noCRCCode),len-2)).toUpper();
 
-    int Flag = data.mid(1,1).toInt();
+    int Flag = data.mid(1,1).toInt(&ok,16);
     moveToThread(OperateDataThread);
     OperateDataThread->start();
-    if(crc == crcCheck)
+    if(crc == crcCheck.toLatin1())
     {
 
         switch(Flag)
         {
-            case 0: Data_Instance(data);break;
-            case 1: Data_History(data);break;
-            case 2: Data_TimePoint(data);break;
-            case 3: Data_Settings(data);break;
+            case 3: if(len>8) Data_Settings(data);
+                    else Data_Instance(data);break;
+            //case 1: Data_History(data);break;
+            case 65: Data_TimePoint(data);break;
+            case 66: Data_History(data);break;
+            //case 3: Data_Settings(data);break;
+        default: Error_Data(data);
         }
     }
     //TODO:operation the data
@@ -114,12 +115,37 @@ void PortAgent::OrderExcuted()
 }
 
 //--------------------以下是封装的命令-----------------------------
+/*16进制字符补足长度*/
+QString PortAgent::expand(QString unexpand){
+    QString zero = "0";
+    QString douZero = "00";
+    QString triZero = "000";
+    QString expandString;
+    switch (unexpand.length()) {
+    case 1:expandString = triZero.append(unexpand);break;
+    case 2:expandString = douZero.append(unexpand);break;
+    case 3:expandString = zero.append(unexpand);break;
+    default:
+        break;
+    }
+    return expandString;
+}
+
+/*modId字符补足长度*/
+QString PortAgent::modIdExpand(int id){
+    QString zero = "0";
+    QString modId = QString::number(id,16).toUpper();
+    if(modId.length()<2){modId = zero.append(modId);}
+    return modId;
+}
+
 QString PortAgent::Order_Get_Settings(int id)
 {
     qDebug()<<"MODID:"<<id<<" "<<"Order_Get_Settings called";
     //TODO: build the command message
     //TODO: sender->write(message)
     QString readDataRequest;
+    CrcCheck *crc = new CrcCheck();
     QString modId = QString::number(id,16);
         QString zero = "0";
     if(modId.length()<2){
@@ -131,9 +157,7 @@ QString PortAgent::Order_Get_Settings(int id)
         readDataRequest.append("00");    //寄存器地址低位
         readDataRequest.append("00");    //寄存器数目高位
         readDataRequest.append("07");    //寄存器数目低位 (这里我分开写清楚点 内啥觉得太长就并成一句好了)
-        QByteArray s = QByteArray::fromHex(readDataRequest.toLatin1().data());
-        uint CRCCode = qChecksum(s,readDataRequest.length());  //生成crc码
-        readDataRequest.append(CRCCode);
+        readDataRequest.append(crc->crcChecksix(readDataRequest));
         return readDataRequest;
 }
 
@@ -144,210 +168,92 @@ QString PortAgent::Order_Change_Settings(int id)
     //TODO: build the command message
     //TODO: sender->write(message)
     qDebug()<<this->settings;
-    QStringList settings = this->settings.split(",");
-    QString modId = QString::number(id,16);
-    QString year;
-    QString month;
-    QString day;
-    QString hour;
-    QString minute;
-    QString second;
-    QString temp;
-    QStringList timeSettings;
-    QStringList time;
-    QStringList dateTime;
-    QStringList clockTime;
-    QString zero = "0";
+    CrcCheck *crc = new CrcCheck();
+    QStringList setting = settings.split(",");
+    QString modId = modIdExpand(id);
+    QStringList timeSetting = setting[6].split(" ");
+    QStringList dateTime = timeSetting[0].split("-");
+    QStringList clockTime = timeSetting[1].split(":");
     bool ok;
-    for(int it = 0;it!=6;++it){
-       if(settings[it].indexOf("#") == EOF && settings[it].indexOf("-") == EOF){
-           temp = QString::number(settings[it].toInt(&ok,16));
-           while(temp.length()<4){
-               temp = zero.append(temp);
-           }
-           settings[it] = temp;
-       }else if(settings[it].indexOf("#")!=EOF){
-           timeSettings = settings[it].split("#");
-           QString temp = QString::number(timeSettings[1].toInt(&ok,16));
-           while(temp.length()<2){
-               temp = zero.append(temp);
-           }
-           settings[it] = temp;
-       }else if(settings[it].indexOf("-")!=EOF){
-           time = settings[6].split(" ");
-           dateTime = time[0].split("-");
-           clockTime = time[1].split(":");
-           year = QString::number(dateTime[0].toInt(&ok,16));
-           if(year.length()==3){
-               year = zero.append(year);
-           }
-           month = QString::number(dateTime[1].toInt(&ok,16));
-           while(month.length()<4){month = zero.append(month);}
-           day = QString::number(dateTime[2].toInt(&ok,16));
-           while(day.length()<4){day = zero.append(day);}
-           hour = QString::number(clockTime[0].toInt(&ok,16));
-           while(hour.length()<4){hour = zero.append(hour);}
-           minute = QString::number(clockTime[1].toInt(&ok,16));
-           while(minute.length()<4){minute = zero.append(minute);}
-           second = QString::number(clockTime[2].toInt(&ok,16));
-           while(second.length()<4){second = zero.append(second);} //补足一个字的长度
-       }
-   }
-   QString changeDataRequest;
-   modId = QString::number(id,16);
-   while(modId.length()<4){modId = zero.append(modId);}
-   changeDataRequest.append(id);
-   changeDataRequest.append("0000");  //寄存器地址
-   changeDataRequest.append("0010");  //寄存器数目
-   changeDataRequest.append("20");  //字节数
-   changeDataRequest.append(settings[0]);  //寄存器[0]位k值
-   changeDataRequest.append(settings[2]);   //档位 寄存器
-   changeDataRequest.append(settings[5]);  //自动关机时间
-   changeDataRequest.append(settings[3]);  //频率关联状态
-   changeDataRequest.append(settings[4]); //存储时间间隔
-   changeDataRequest.append(settings[1]); //测量量程最大值
-   changeDataRequest.append(modId);    //485id
-   changeDataRequest.append(year);
-   changeDataRequest.append(month);
-   changeDataRequest.append(day);
-   changeDataRequest.append(hour);
-   changeDataRequest.append(minute);
-   changeDataRequest.append(second);
-   QByteArray s = QByteArray::fromHex(changeDataRequest.toLatin1().data());
-   uint CRCCode = qChecksum(s,changeDataRequest.length());
-   changeDataRequest.append(CRCCode);
-   return changeDataRequest;
+    for(int it = 0;it<6;++it){
+        setting[it] = QString::number(setting[it].toInt(&ok,10),16).toUpper();
+        setting[it] = expand(setting[it]);
+    }
+    for(int it = 0;it<dateTime.length();it++){
+        dateTime[it] = QString::number(dateTime[it].toInt(&ok,10),16).toUpper();
+        dateTime[it] = expand(dateTime[it]);
+    }
+    for(int it = 0;it<clockTime.length();it++){
+        clockTime[it] = QString::number(clockTime[it].toInt(&ok,10),16).toUpper();
+        clockTime[it] = expand(clockTime[it]);
+    }
+    QString changeDataRequest;
+    changeDataRequest.append(modId);
+    changeDataRequest.append("10"); //功能码
+    changeDataRequest.append("0000");  //寄存器地址
+    changeDataRequest.append("0010");  //寄存器数目
+    changeDataRequest.append("20");  //字节数
+    changeDataRequest.append(setting[0]);  //寄存器[0]位k值
+    changeDataRequest.append(setting[2]);   //档位 寄存器
+    changeDataRequest.append(setting[5]);  //自动关机时间
+    changeDataRequest.append(setting[3]);  //频率关联状态
+    changeDataRequest.append(setting[4]); //存储时间间隔
+    changeDataRequest.append(setting[1]); //测量量程最大值
+    modId = expand(modId);
+    changeDataRequest.append(modId);    //485id
+    changeDataRequest.append(dateTime[0]);
+    changeDataRequest.append(dateTime[1]);
+    changeDataRequest.append(dateTime[2]);
+    changeDataRequest.append(clockTime[0]);
+    changeDataRequest.append(clockTime[1]);
+    changeDataRequest.append(clockTime[2]);
+    changeDataRequest.append(crc->crcChecksix(changeDataRequest));
+    return changeDataRequest;
 }
 
 QStringList PortAgent::Order_Get_Device_List(int id)
 {
-     qDebug()<<"MODID:"<<id<<" "<<"Order_Get_Device_Lsit Gived";
-     QStringList CollectedOrder;
-         QString zero = "0";
-     QString modId = QString::number(id,16);
-     if(modId.length()<2){
-         modId = zero.append(modId);
-     }
-     QString readTimeGroupRequestChangeReg;
-     readTimeGroupRequestChangeReg.append(modId);
-     readTimeGroupRequestChangeReg.append("06");
-     readTimeGroupRequestChangeReg.append("00");
-     readTimeGroupRequestChangeReg.append("10");
-     readTimeGroupRequestChangeReg.append("0001");
-     QByteArray s1 = QByteArray::fromHex(readTimeGroupRequestChangeReg.toLatin1().data());
-     uint CRCCode1 = qChecksum(s1,readTimeGroupRequestChangeReg.length());  //生成crc码
-     readTimeGroupRequestChangeReg.append(CRCCode1);
-     QString readTimeTableRequestOrder;
-     readTimeTableRequestOrder.append(modId);
-     readTimeTableRequestOrder.append("03");   //功能码
-     readTimeTableRequestOrder.append("0011");   //地址位
-     readTimeTableRequestOrder.append("0006");   //寄存器数量
-     QByteArray s = QByteArray::fromHex(readTimeTableRequestOrder.toLatin1().data());
-     uint CRCCode = qChecksum(s,readTimeTableRequestOrder.length());  //生成crc码
-     readTimeTableRequestOrder.append(CRCCode);
-     QStringList ReadTimeTableRequestOrder;
-     for(int i=0;i<25;i++)
-         ReadTimeTableRequestOrder<<readTimeTableRequestOrder;
-
-     QString readTimeGroupRequestChangeRegReset; //清零16寄存器
-     readTimeGroupRequestChangeRegReset.append(modId);
-     readTimeGroupRequestChangeRegReset.append("06");
-     readTimeGroupRequestChangeRegReset.append("00");
-     readTimeGroupRequestChangeRegReset.append("10");
-     readTimeGroupRequestChangeRegReset.append("0000");
-     QByteArray s2 = QByteArray::fromHex(readTimeGroupRequestChangeRegReset.toLatin1().data());
-     uint CRCCode2 = qChecksum(s2,readTimeGroupRequestChangeRegReset.length());  //生成crc码
-     readTimeGroupRequestChangeRegReset.append(CRCCode2);
-
-     CollectedOrder<<readTimeGroupRequestChangeReg<<ReadTimeTableRequestOrder<<readTimeGroupRequestChangeRegReset;
-     return CollectedOrder;
+    CrcCheck *crc = new CrcCheck();
+    QString radioRequest;
+    radioRequest.append(modIdExpand(id)).append("11");
+    return radioRequest + crc->crcChecksix(radioRequest);
 }
 
-QStringList PortAgent::Order_Upload_History_Data(int id)
+QString PortAgent::Order_Get_Time_Point(int id){
+    QString readTimePointRequest;
+    CrcCheck *crc = new CrcCheck();
+    readTimePointRequest.append(modIdExpand(id)).append("41");
+    readTimePointRequest.append(crc->crcChecksix(readTimePointRequest));
+    return readTimePointRequest;
+}
+
+QString PortAgent::Order_Upload_History_Data(int id)//170301120000
 {
+
     qDebug()<<"MODID:"<<id<<" "<<"Order_Upload_Selected_Data Gived";
     //TODO: build the command message
     //TODO: sender->write(message)
-    QStringList UploadRequest;
-    QString zero = "0";
-    QString modId = QString::number(id/10000,16);//这里我把 编号 groupid和modId全部合并到id参数中
-    if(modId.length()<2){                      //具体做法是，传来的id = modId*10000+groupId*100+num (num代表有多少个数据）
-        modId = zero.append(modId);
+    QString UploadRequest;
+    //这里我把 编号 groupid和modId全部合并到id参数中
+    //具体做法是，传来的id = modId*10000+groupId*100+num (num代表有多少个数据）
+    UploadRequest.append(modIdExpand(id)).append("42"); //添加modid与功能码42
+    for(int i = 0;i < timeId.length()/2;i++){
+        UploadRequest.append(expand(QString::number(timeId.mid(2*i,2).toInt(),16).toUpper()));
     }
-    QString number = QString::number(id%10000/100,16);
-    while (number.length()<4){
-        number = zero.append(number);
-    }
-    QString readTimeGroupRequestChangeReg1;
-    readTimeGroupRequestChangeReg1.append(modId);
-    readTimeGroupRequestChangeReg1.append("06");
-    readTimeGroupRequestChangeReg1.append("00");
-    readTimeGroupRequestChangeReg1.append("17");
-    readTimeGroupRequestChangeReg1.append(number);
-    QByteArray s1 = QByteArray::fromHex(readTimeGroupRequestChangeReg1.toLatin1().data());
-    uint CRCCode1 = qChecksum(s1,readTimeGroupRequestChangeReg1.length());  //生成crc码
-    readTimeGroupRequestChangeReg1.append(CRCCode1);
-
-    QString readTimeGroupRequestChangeReg2;
-    readTimeGroupRequestChangeReg2.append(modId);
-    readTimeGroupRequestChangeReg2.append("06");
-    readTimeGroupRequestChangeReg2.append("00");
-    readTimeGroupRequestChangeReg2.append("18");
-    readTimeGroupRequestChangeReg2.append("0001");
-    QByteArray s2 = QByteArray::fromHex(readTimeGroupRequestChangeReg2.toLatin1().data());
-    uint CRCCode2 = qChecksum(s2,readTimeGroupRequestChangeReg2.length());  //生成crc码
-    readTimeGroupRequestChangeReg2.append(CRCCode2);
-
-    QString readTimeGroupRequest;
-    readTimeGroupRequest.append(QString::number(id,16));
-    readTimeGroupRequest.append("03");    //功能码
-    readTimeGroupRequest.append("00");    //寄存器地址高位
-    readTimeGroupRequest.append("19");    //寄存器地址低位
-    readTimeGroupRequest.append("00");    //寄存器数目高位
-    readTimeGroupRequest.append("02");    //寄存器数目低位 (这里我分开写清楚点 内啥觉得太长就并成一句好了)
-    QByteArray s = QByteArray::fromHex(readTimeGroupRequest.toLatin1().data());
-    uint CRCCode = qChecksum(s,readTimeGroupRequest.length());  //生成crc码
-    readTimeGroupRequest.append(CRCCode);
-    QStringList ReadTimeGroupRequest;
-
-    int groups = id%10000%100;
-    for(int i=0;i<groups;i++)
-        ReadTimeGroupRequest<<readTimeGroupRequest;
-
-
-    QString readTimeGroupRequestChangeReg2Reset;
-    readTimeGroupRequestChangeReg2Reset.append(modId);
-    readTimeGroupRequestChangeReg2Reset.append("06");
-    readTimeGroupRequestChangeReg2Reset.append("00");
-    readTimeGroupRequestChangeReg2Reset.append("18");
-    readTimeGroupRequestChangeReg2Reset.append("0001");
-    QByteArray s3 = QByteArray::fromHex(readTimeGroupRequestChangeReg2Reset.toLatin1().data());
-    uint CRCCode3 = qChecksum(s3,readTimeGroupRequestChangeReg2Reset.length());  //生成crc码
-    readTimeGroupRequestChangeReg2Reset.append(CRCCode3);
-
-    UploadRequest<<readTimeGroupRequestChangeReg1<<readTimeGroupRequestChangeReg2<<ReadTimeGroupRequest<<readTimeGroupRequestChangeReg2Reset;
-    return UploadRequest;
 }
 
 QString PortAgent::Order_Read_Instance_Data(int id)
 {
     qDebug()<<"MODID:"<<id<<" "<<"Order_Read_Instance_Data Gived";
     QString readDataRequest;
-    QString zero = "0";
-    QString modId = QString::number(id,16);
-    if(modId.length()<2)
-        modId = zero.append(modId);
-    readDataRequest.append(modId);
+    CrcCheck *crc = new CrcCheck();
+    readDataRequest.append(modIdExpand(id));
     readDataRequest.append("03");    //功能码
     readDataRequest.append("00");    //寄存器地址高位
-    readDataRequest.append("14");    //寄存器地址低位
+    readDataRequest.append("0E");    //寄存器地址低位
     readDataRequest.append("00");    //寄存器数目高位
     readDataRequest.append("02");    //寄存器数目低位 (这里我分开写清楚点 内啥觉得太长就并成一句好了)
-//    QByteArray s = QByteArray::fromHex(readDataRequest.toLatin1().data());
-//    uint CRCCode = qChecksum(s,readDataRequest.length());  //生成crc码
-//    QString crc = QString::number(CRCCode,16);
-//    readDataRequest.append(crc);
-    readDataRequest.append("C1FB");
+    readDataRequest.append(crc->crcChecksix(readDataRequest));
     return readDataRequest;
 }
 
@@ -371,13 +277,10 @@ void PortAgent::Order_Stop_Read_Instance(int id)
 //---------------------以下是数据粗加工----------------------------
 QStringList PortAgent::Raw_Data_Instance(QByteArray* rec)
 {
-    QByteArray noCRCdata = rec->mid(0,7);
+    QByteArray noCRCdata = rec->mid(0,rec->length()-2);
     QStringList instanceData;
     int modid = (noCRCdata.mid(0,1).toInt(&ok,16));
-    int fun = noCRCdata.mid(1,1).toInt(&ok,16);
-    if(fun == 03 )
-    {
-        bool ok;
+    bool ok;
 //        int num = (noCRCdata.mid(2,1).toInt(&ok,16));
 //        int year = (noCRCdata.mid(3,2).toInt(&ok,16));
 //        int month = (noCRCdata.mid(5,2).toInt(&ok,16));
@@ -385,83 +288,101 @@ QStringList PortAgent::Raw_Data_Instance(QByteArray* rec)
 //        int hour = (noCRCdata.mid(9,2).toInt(&ok,16));
 //        int minute = (noCRCdata.mid(11,2).toInt(&ok,16));
 //        int second = (noCRCdata.mid(13,2).toInt(&ok,16));
-        int vol = (noCRCdata.mid(2,2).toInt(&ok,16));
-        int fre = (noCRCdata.mid(4,2).toInt(&ok,16));
+    int vol = (noCRCdata.mid(3,2).toInt(&ok,16));
+    int fre = (noCRCdata.mid(5,2).toInt(&ok,16));
         //QString s = QString::number(year,10);
         //emit operationFinished(QByteArray::number(vol), QByteArray::number(fre));
-        instanceData<<QString::number(modid,10)<<QString::number(vol,10)<<QString::number(fre,10);
-    }
+    instanceData<<QString::number(modid,10)<<QString::number(vol,10)<<QString::number(fre,10);
     return instanceData;
 }
 
 QStringList PortAgent::Raw_Data_TimePoint(QByteArray* rec)
 {
-    QByteArray noCRCData = rec->mid(0,15);
-    QStringList CollectedData;
+    QByteArray noCRCData = rec->mid(0,rec->length()-2);
+    QStringList timeTable;
     bool ok;
     int modid = noCRCData.mid(0,1).toInt(&ok,16);
     int fun = noCRCData.mid(1,1).toInt(&ok,16);
-    if (fun == 03)
+    int len = (rec->length()-4)/4;
+    QString timeData;
+    if (fun == 65)
     {
-        int num = noCRCData.mid(2,1).toInt(&ok,16);
-        int year = noCRCData.mid(3,1).toInt(&ok,16);
-        int month = noCRCData.mid(4,1).toInt(&ok,16);
-        int day = noCRCData.mid(5,1).toInt(&ok,16);
-        int hour = noCRCData.mid(6,1).toInt(&ok,16);
-        int minute = noCRCData.mid(7,1).toInt(&ok,16);
-        int second = noCRCData.mid(8,1).toInt(&ok,16);
-        int timeGroupNum = noCRCData.mid(9,2).toInt(&ok,16);
-        int startPosition = noCRCData.mid(11,2).toInt(&ok,16);
-        int timeInterval = noCRCData.mid(13,2).toInt(&ok,16);
-        QString time = QString::number(year,10) +"-"+ QString::number(month,10)+"-"+ QString::number(day,10)
-               + " " + QString::number(hour,10) +":" + QString::number(minute,10) +":" + QString::number(second,10);
-        //格式 2017/1/25 17：03：54
-        CollectedData<<QString::number(modid,10)<<time<<QString::number(timeGroupNum,10)
-                 <<QString::number(startPosition,10)<<QString::number(timeInterval,10);
+        for(int i = 0;i < len;i++){
+            timeData = QString("%1-%2-%3 %4:%5:%6 %7").arg(QString::number(noCrcData.mid(2+7*i,1).toInt(&ok,16),10)).arg(QString::number(noCrcData.mid(3+7*i,1).toInt(&ok,16),10)).arg(QString::number(noCrcData.mid(4+7*i,1).toInt(&ok,16),10)).arg(QString::number(noCrcData.mid(5+7*i,1).toInt(&ok,16),10)).arg(QString::number(noCrcData.mid(6+7*i,1).toInt(&ok,16),10)).arg(QString::number(noCrcData.mid(7+7*i,1).toInt(&ok,16),10)).arg(QString::number(noCrcData.mid(8+7*i,1).toInt(&ok,16),10));
+            timeTable.append(timeData);
+        }
+//        int num = noCRCData.mid(2,1).toInt(&ok,16);
+//        int year = noCRCData.mid(3,1).toInt(&ok,16);
+//        int month = noCRCData.mid(4,1).toInt(&ok,16);
+//        int day = noCRCData.mid(5,1).toInt(&ok,16);
+//        int hour = noCRCData.mid(6,1).toInt(&ok,16);
+//        int minute = noCRCData.mid(7,1).toInt(&ok,16);
+//        int second = noCRCData.mid(8,1).toInt(&ok,16);
+//        int timeGroupNum = noCRCData.mid(9,2).toInt(&ok,16);
+//        int startPosition = noCRCData.mid(11,2).toInt(&ok,16);
+//        int timeInterval = noCRCData.mid(13,2).toInt(&ok,16);
+//        QString time = QString::number(year,10) +"-"+ QString::number(month,10)+"-"+ QString::number(day,10)
+//               + " " + QString::number(hour,10) +":" + QString::number(minute,10) +":" + QString::number(second,10);
+//        //格式 2017/1/25 17：03：54
+//        CollectedData<<QString::number(modid,10)<<time<<QString::number(timeGroupNum,10)
+//                 <<QString::number(startPosition,10)<<QString::number(timeInterval,10);
      }   
     DB->createDataTable(QString::number(modid,10)+"_history");
     DB->createDataTable(QString::number(modid,10)+"_instance");
-    return CollectedData;
+    return timeTable;
 }
 
 QStringList PortAgent::Raw_Data_History(QByteArray* rec)
 {
     QByteArray noCRCCode = rec->mid(0,7);
-    QStringList SelectedData;
+    QStringList timePointTable;
+    bool ok;
     int modId = noCRCCode.mid(0,1).toInt(&ok,16);
-
     int fun = noCRCCode.mid(1,1).toInt(&ok,16);
-    if (fun == 03 )
-    {
-        int num = noCRCCode.mid(2,1).toInt(&ok,16);
-        int soundGroup = noCRCCode.mid(3,2).toInt(&ok,16);
-        int freGroup = noCRCCode.mid(5,2).toInt(&ok,16);
-        SelectedData<<QString::number(modId,10)<<QString::number(soundGroup,10)<<QString::number(freGroup,10);
+    int len = noCRCCode.mid(10,1).toInt(&ok,16);
+    int year = noCRCCode.mid(2,1).toInt(&ok,16);
+    int month = noCRCCode.mid(3,1).toInt(&ok,16);
+    int day = noCRCCode.mid(4,1).toInt(&ok,16);
+    int hour = noCRCCode.mid(5,1).toInt(&ok,16);
+    int minute = noCRCCode.mid(6,1).toInt(&ok,16);
+    int second = noCRCCode.mid(7,1).toInt(&ok,16);
+    for(int i=0;i<len;i++){
+        QString timePoint = QString("%1-%2-%3 %4:%5:%6 %7 %8").arg(QString::number(year,10)).arg(QString::number(month,10)).arg(QString::number(day,10)).arg(QString::number(hour,10)).arg(QString::number(minute,10)).arg(QString::number(second,10)).arg(QString::number(noCRCCode.mid(10+len*2,1).toInt(&ok,16)*100,10)).arg(QString::number(noCRCCode.mid(11+len*2,1).toInt(&ok,16)*100,10));
+        timePointTable<<timePoint;
+        second+=3;
+        if(second>=60){second-=60;minute+=1;
+        }if(minute>=60){minute-=60;hour+=1;
+        }if(hour>=24){hour-=24;day+=1;
+        }if(month==1||month==3||month==5||month==7||month==8||month==10||month==12){
+            if(day>31){day-=31;month+=1;}
+        }if(month==4||month==6||month==9||month==11){
+            if(day>30){day-=30;month+=1;}
+        }if(month==2 && year%4==0){
+            if(day>29){day-=29;month+=1;}
+        }if(month==2 && year%4!=0){
+            if(day>28){day-=28;month+=1;}
+        }if(month>12){month-=1;year+=1;}
     }
-    return SelectedData;
+    return timePointTable;
 }
 
 QStringList PortAgent::Raw_Data_Settings(QByteArray* rec)
 {
-    QByteArray noCRCdata = rec->mid(0,17);
+    QByteArray noCRCdata = rec->mid(0,rec->length()-2);
     QStringList settings;
     int modid = (noCRCdata.mid(0,1).toInt(&ok,16));
     int fun = noCRCdata.mid(1,1).toInt(&ok,16);
-    if(fun == 03 )
-    {
-        bool ok;
-        int num = (noCRCdata.mid(2,1).toInt(&ok,16));
-        int kValue = (noCRCdata.mid(3,2).toInt(&ok,16));
-        int shift = (noCRCdata.mid(5,2).toInt(&ok,16));
-        int autoCloseTime = (noCRCdata.mid(7,2).toInt(&ok,16));
-        int connectFrqcyOnOff = (noCRCdata.mid(9,2).toInt(&ok,16));
-        int saveTimeInterval = (noCRCdata.mid(11,2).toInt(&ok,16));
-        int rangeMax = (noCRCdata.mid(13,2).toInt(&ok,16));
-        int moddid = (noCRCdata.mid(15,2).toInt(&ok,16));
+    bool ok;
+    int num = (noCRCdata.mid(2,1).toInt(&ok,16));
+//    for(int i = 0;i < num;i++){settings<<QString::number(noCRCdata.mid(3+2*i,2).toInt(&ok,16));}
+    int kValue = (noCRCdata.mid(3,2).toInt(&ok,16));
+    int rangeMax = (noCRCdata.mid(5,2).toInt(&ok,16))*100;
+    int SaveGearsValue = (noCRCdata.mid(7,2).toInt(&ok,16));
+    int connectFrqcyOnOff = (noCRCdata.mid(9,2).toInt(&ok,16));
+    int saveTimeInterval = (noCRCdata.mid(11,2).toInt(&ok,16));
         //QString s = QString::number(year,10);
         //emit operationFinished(QByteArray::number(vol), QByteArray::number(fre));
-        settings<<QString::number(kValue,10)<<QString::number(shift,10)<<QString::number(autoCloseTime,10)<<QString::number(connectFrqcyOnOff,10)<<QString::number(saveTimeInterval,10)<<QString::number(rangeMax,10);
-    }
+    settings<<QString::number(kValue,10)<<QString::number(rangeMax,10)<<QString::number(SaveGearsValue,10)<<QString::number(connectFrqcyOnOff,10)<<QString::number(saveTimeInterval,10);
     return settings;
 }
 //----------------------------------------------------------------
@@ -483,6 +404,8 @@ void PortAgent::Data_Instance(QByteArray data)
 void PortAgent::Data_History(QByteArray data)
 {
     Raw_Data_History(&data);
+
+    //DB->insertHistoryDataTable();
 }
 
 void PortAgent::Data_TimePoint(QByteArray data)
@@ -496,3 +419,15 @@ void PortAgent::Data_Settings(QByteArray data)
 }
 //----------------------------------------------------------------
 
+//--------------------以下是错误处理------------------------------
+QString PortAgent::Error_Data(QByteArray* rec){
+    int id = rec->mid(0,1).toInt(ok,16);
+    int fun = rec->mid(1,1).toInt(ok,16) - 16*8;
+    int flag = rec->mid(2,1).toInt(ok,16);
+    switch (flag){
+        case 1:return "错误功能码";break;
+        case 2:return "错误地址";break;
+        case 3:return "错误数据";break;
+        case 6:return "从设备忙";break;
+}
+}

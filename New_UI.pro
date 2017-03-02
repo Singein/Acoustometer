@@ -18,14 +18,16 @@ SOURCES += main.cpp\
     settings.cpp \
     deviceparameter.cpp \
     database.cpp \
-    toexcel.cpp
+    toexcel.cpp \
+    crccheck.cpp
 
 HEADERS  += widget.h \
     portagent.h \
     settings.h \
     deviceparameter.h \
     database.h \
-    toexcel.h
+    toexcel.h \
+    crccheck.h
 
 FORMS    += widget.ui \
     settings.ui \

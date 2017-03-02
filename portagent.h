@@ -32,6 +32,7 @@ public:
     Database *DB;
     void setPort(QSerialPort *P);
     bool isStarted;
+    QString timeId; //格式 170227112140
     void setMap(QMap<QString,int>* Map);
     QMap<QString,int>* map;
 
@@ -41,6 +42,7 @@ private:
     QString Order_Get_Settings(int id);//获取当前下位机参数指令
     QString Order_Change_Settings(int id);//更改下位机参数指令
     QStringList Order_Get_Device_List(int id);//获取时间组列表数据
+    QString Order_Get_Time_Point(int id);//获取某一id的时间点数据
     QStringList Order_Upload_History_Data(int id);//获取某一特定编号的时间组数据
     QString Order_Read_Instance_Data(int id);//获取实时数据
     void Order_Start_Read_Instance(int id);//开始采集
@@ -51,6 +53,8 @@ private:
     QStringList Raw_Data_TimePoint(QByteArray* rec);//历史数据组列表处理方法
     QStringList Raw_Data_History(QByteArray* rec);//某一编号时间组数据处理方法
     QStringList Raw_Data_Settings(QByteArray* rec);//下位机当前参数数据处理方法
+    QString expand(QString unexpand);
+    QString modIdExpand(int id);
 
     //----------数据解析（精加工）-----------------------------------------------
     void Data_Instance(QByteArray rec);
@@ -58,6 +62,8 @@ private:
     void Data_TimePoint(QByteArray rec);
     void Data_Settings(QByteArray rec);
 
+    //----------数据错误-----------------------------------------------
+    QString Error_Data(QByteArray* rec);
     QString zero;
     bool ok;
 
