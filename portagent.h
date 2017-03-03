@@ -38,12 +38,13 @@ public:
 
 
 private:
+    QStringList *IDLIST;
     QString settings; //存储下位机要修改的参数设置
     QString Order_Get_Settings(int id);//获取当前下位机参数指令
     QString Order_Change_Settings(int id);//更改下位机参数指令
-    QStringList Order_Get_Device_List(int id);//获取时间组列表数据
+    QString Order_Get_Device_List(int id);//获取时间组列表数据
     QString Order_Get_Time_Point(int id);//获取某一id的时间点数据
-    QStringList Order_Upload_History_Data(int id);//获取某一特定编号的时间组数据
+    QString Order_Upload_History_Data(int id);//获取某一特定编号的时间组数据
     QString Order_Read_Instance_Data(int id);//获取实时数据
     void Order_Start_Read_Instance(int id);//开始采集
     void Order_Stop_Read_Instance(int id);//停止采集
@@ -53,6 +54,7 @@ private:
     QStringList Raw_Data_TimePoint(QByteArray* rec);//历史数据组列表处理方法
     QStringList Raw_Data_History(QByteArray* rec);//某一编号时间组数据处理方法
     QStringList Raw_Data_Settings(QByteArray* rec);//下位机当前参数数据处理方法
+    QStringList* Raw_Data_ID(QByteArray* rec);//下位机ID
     QString expand(QString unexpand);
     QString modIdExpand(int id);
 
@@ -61,9 +63,10 @@ private:
     void Data_History(QByteArray rec);
     void Data_TimePoint(QByteArray rec);
     void Data_Settings(QByteArray rec);
+    void Data_ID(QByteArray rec);
 
     //----------数据错误-----------------------------------------------
-    QString Error_Data(QByteArray* rec);
+//    QString Error_Data(QByteArray* rec);
     QString zero;
     bool ok;
 

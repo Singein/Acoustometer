@@ -130,6 +130,8 @@ QStringList Database::queryDataTableAll(QString tableName){
         data0.append(data2);
         list.append(data0);
     }
+    qDebug()<<"queryDataTableAll called!";
+
     return list;
 }
 

@@ -195,8 +195,7 @@ void Widget::viewInit()
     //------------------------------------------------
     qDebug()<<"-----------声强检测仪输出日志--------------";
     qDebug()<<"树状列表根结点初始化成功";
-    initTree_test();
-
+//    initTree();
     model->appendRow(devices);
     ui->treeView->setModel(model);
     initTable();
@@ -223,7 +222,7 @@ void Widget::add_table_row(QStringList items)
 {
     int rowCount = ui->tableWidget->rowCount()-1;
     qDebug()<<"成功调用add_table_row!";
-    ui->tableWidget->setItem(rowCount, 0, new QTableWidgetItem(items.at(0)));
+    ui->tableWidget->setItem(rowCount, 0, new QTableWidgetItem(items.at(items.length()-1)));
     ui->tableWidget->setItem(rowCount, 1, new QTableWidgetItem(items.at(1)));
     ui->tableWidget->setItem(rowCount, 2, new QTableWidgetItem(items.at(2)));
     qDebug()<<ui->tableWidget->rowCount();
