@@ -87,6 +87,7 @@ void Widget::current_index_changed(QModelIndex currentIndex)
                 currentItem->setCheckState(Qt::CheckState::Checked);
                 portAgent->Set_timeId(currentItem->text());
                 portAgent->GiveOrders(ORDER_UPLOAD_HISTORY_DATA,get_device_id());
+                QThread::msleep(1000);
             }
             ui->treeView->expand(ui->treeView->currentIndex());
         }

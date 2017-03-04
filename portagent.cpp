@@ -241,11 +241,20 @@ QString PortAgent::Order_Upload_History_Data(int id)//170301120000
     qDebug()<<"MODID:"<<id<<" "<<"Order_Upload_Selected_Data Gived";
     //TODO: build the command message
     //TODO: sender->write(message)
+    CrcCheck *crc = new CrcCheck();
     QString UploadRequest;
     UploadRequest.append(modIdExpand(id)).append("42"); //添加modid与功能码42
-    for(int i = 0;i < timeId.length()/2;i++){
-        UploadRequest.append(expand(QString::number(timeId.mid(2*i,2).toInt(),16).toUpper()));
-    }
+    QStringList timeSettings = timeId.split(" ");
+    QStringList dateSettings = timeSettings.at(0).split("-");
+    QStringList clockSettings = timeSettings.at(1).split(":");
+    UploadRequest.append(modIdExpand(dateSettings.at(0).toInt(&ok,10)))
+            .append(modIdExpand(dateSettings.at(1).toInt(&ok,10)))
+            .append(modIdExpand(dateSettings.at(2).toInt(&ok,10)))
+            .append(modIdExpand(clockSettings.at(0).toInt(&ok,10)))
+            .append(modIdExpand(clockSettings.at(1).toInt(&ok,10)))
+            .append(modIdExpand(clockSettings.at(2).toInt(&ok,10)));
+    UploadRequest.append(crc->crcChecksix(UploadRequest));
+    qDebug()<<UploadRequest;
     return UploadRequest;
 }
 
