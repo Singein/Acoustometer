@@ -26,19 +26,20 @@ public:
     ~PortAgent();
     void GiveOrders(int order,int id);
     void Set_Settings(QString Settings);//设置下位机即将要应用的参数
+    void Set_timeId(QString TimeId);//设置下位机要获取的历史数据时间点
     QSerialPort *port;
     QThread *ReciveDataThread;
     QThread *OperateDataThread;
     Database *DB;
     void setPort(QSerialPort *P);
     bool isStarted;
-    QString timeId; //格式 170227112140
     void setMap(QMap<QString,int>* Map);
     QMap<QString,int>* map;
 
 
 private:
     QStringList *IDLIST;
+    QString timeId; //格式 170227112140
     QString settings; //存储下位机要修改的参数设置
     QString Order_Get_Settings(int id);//获取当前下位机参数指令
     QString Order_Change_Settings(int id);//更改下位机参数指令

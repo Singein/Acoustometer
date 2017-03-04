@@ -78,12 +78,42 @@ void Widget::current_index_changed(QModelIndex currentIndex)
         ui->Button_start->hide();
         ui->Button_import->show();
         ui->Button_import->setEnabled(true);
+        if(get_current_item()->checkState()==0)
+        {
+            get_current_item()->setCheckState(Qt::CheckState::Checked);
+            for(int i=0;i<get_current_item()->rowCount();i++)
+            {
+                QStandardItem *currentItem = get_current_item()->child(i);
+                currentItem->setCheckState(Qt::CheckState::Checked);
+                portAgent->Set_timeId(currentItem->text());
+                portAgent->GiveOrders(ORDER_UPLOAD_HISTORY_DATA,get_device_id());
+            }
+            ui->treeView->expand(ui->treeView->currentIndex());
+        }
+        else
+        {
+            get_current_item()->setCheckState(Qt::CheckState::Unchecked);
+            for(int i=0;i<get_current_item()->rowCount();i++)
+            {
+                QStandardItem *currentItem = get_current_item()->child(i);
+                currentItem->setCheckState(Qt::CheckState::Unchecked);
+            }
+        }
     }
 
     if(s.contains("-"))
     {
         ui->Button_start->hide();
         ui->Button_import->show();
+        if(get_current_item()->checkState()==0)
+        {
+            get_current_item()->setCheckState(Qt::CheckState::Checked);
+        }
+        else
+        {
+            get_current_item()->setCheckState(Qt::CheckState::Unchecked);
+            get_current_item()->parent()->setCheckState(Qt::CheckState::Unchecked);
+        }
     }
 
     if(currentItem->checkState()==Qt::CheckState::Checked)
@@ -116,6 +146,7 @@ void Widget::initTree(QStringList nodes)
     device->setEditable(false);
     instance_data->setEditable(false);
     history_data->setEditable(false);
+    history_data->setCheckable(true);
 
     for(int i = 1;i < nodes.length();i++)
     {   
@@ -127,6 +158,7 @@ void Widget::initTree(QStringList nodes)
     }
     device->appendRow(instance_data);
     device->appendRow(history_data);
+    devices->appendRow(device);
     model->appendRow(devices);//刷新modle
     ui->treeView->setModel(model);//刷新treeview
 
@@ -195,7 +227,7 @@ void Widget::viewInit()
     //------------------------------------------------
     qDebug()<<"-----------声强检测仪输出日志--------------";
     qDebug()<<"树状列表根结点初始化成功";
-//    initTree();
+//    initTree_test();
     model->appendRow(devices);
     ui->treeView->setModel(model);
     initTable();

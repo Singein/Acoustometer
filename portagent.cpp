@@ -13,6 +13,7 @@ PortAgent::PortAgent()
     ReciveDataThread = new QThread;
     OperateDataThread = new QThread;
     DB = new Database;
+//    DB->createConnection();
     qDebug()<<"当前线程ID:"<<QThread::currentThreadId()<<" port agent 已就位";
 //    DB->createTable();
 }
@@ -36,6 +37,11 @@ void PortAgent::setPort(QSerialPort *p)
 void PortAgent::Set_Settings(QString Settings)
 {
     this->settings = Settings;
+}
+
+void PortAgent::Set_timeId(QString TimeId)
+{
+    this->timeId = TimeId;
 }
 
 void PortAgent::setMap(QMap<QString, int> *Map)
@@ -83,17 +89,16 @@ void PortAgent::OrderExcuted()
     int len = data.length();//下面就是根据不同的长度，调用不同的数据处理方法 
 //    QByteArray noCRCCode = data.mid(0,len-2);
     CrcCheck *crcg = new CrcCheck();
-    QByteArray crc = data.mid(len-2,2);
-    QString crcCheck = crcg->crcChecksix(data.mid(0,len-2));
-//    QByteArray crcCheck = QByteArray::number(qChecksum(QByteArray::fromHex(noCRCCode),len-2)).toUpper();
+    QString crc = data.mid(len-2,2).toHex().toUpper();
+    QString crcCheck = crcg->crcChecksix(data.mid(0,len-2).toHex());
 
     int Flag = data.mid(1,1).toHex().toInt(&ok,16);
     moveToThread(OperateDataThread);
     OperateDataThread->start();
-//    qDebug()<<"xiaweiji"<<crc.toHex().data();
-//    qDebug()<<"shangweiji"<<crcCheck<<" flag:"<<Flag<<" fun: "<<data.mid(1,1).toInt(&ok,16)<<data.mid(1,1).toHex().toInt(&ok,16);
-    if(crc != crcCheck.toLatin1())
+    if(crc == crcCheck)
     {
+        qDebug()<<"ok";
+        qDebug()<<Flag;
         switch(Flag)
         {
             case 2: Data_ID(data);
@@ -217,7 +222,7 @@ QString PortAgent::Order_Get_Device_List(int id)
 {
     CrcCheck *crc = new CrcCheck();
     QString radioRequest;
-    radioRequest.append(modIdExpand(id)).append("11");
+    radioRequest.append(modIdExpand(id)).append("41");
     radioRequest.append(crc->crcChecksix(radioRequest));
     return radioRequest;
 }
@@ -299,14 +304,24 @@ QStringList PortAgent::Raw_Data_TimePoint(QByteArray* rec)
     QStringList timeTable;
     bool ok;
     int modid = noCRCData.mid(0,1).toHex().toInt(&ok,16);
-    int len = (rec->length()-4)/4;
+//    qDebug()<<(rec->length()-4)/7;
+    int len = (rec->length()-4)/7;
     QString timeData;
-        for(int i = 0;i < len;i++){
-            timeData = QString("%1-%2-%3 %4:%5:%6 %7").arg(QString::number(noCRCData.mid(2+7*i,1).toInt(&ok,16),10)).arg(QString::number(noCRCData.mid(3+7*i,1).toInt(&ok,16),10)).arg(QString::number(noCRCData.mid(4+7*i,1).toInt(&ok,16),10)).arg(QString::number(noCRCData.mid(5+7*i,1).toInt(&ok,16),10)).arg(QString::number(noCRCData.mid(6+7*i,1).toInt(&ok,16),10)).arg(QString::number(noCRCData.mid(7+7*i,1).toInt(&ok,16),10)).arg(QString::number(noCRCData.mid(8+7*i,1).toInt(&ok,16),10));
-            timeTable.append(timeData);
-        }
+    timeTable.append(QString::number(modid));
+    for(int i = 0;i < len;i++){
+        timeData = QString("%1-%2-%3 %4:%5:%6 %7")
+                .arg(QString::number(noCRCData.mid(2+7*i,1).toHex().toInt(&ok,16),10))
+                .arg(QString::number(noCRCData.mid(3+7*i,1).toHex().toInt(&ok,16),10))
+                .arg(QString::number(noCRCData.mid(4+7*i,1).toHex().toInt(&ok,16),10))
+                .arg(QString::number(noCRCData.mid(5+7*i,1).toHex().toInt(&ok,16),10))
+                .arg(QString::number(noCRCData.mid(6+7*i,1).toHex().toInt(&ok,16),10))
+                .arg(QString::number(noCRCData.mid(7+7*i,1).toHex().toInt(&ok,16),10))
+                .arg(QString::number(noCRCData.mid(8+7*i,1).toHex().toInt(&ok,16),10));
+        timeTable.append(timeData);
+    }
     DB->createDataTable(QString::number(modid,10)+"_history");
     DB->createDataTable(QString::number(modid,10)+"_instance");
+    qDebug()<<timeTable;
     return timeTable;
 }
 
@@ -360,7 +375,7 @@ QStringList PortAgent::Raw_Data_Settings(QByteArray* rec)
     int saveTimeInterval = (noCRCdata.mid(11,2).toHex().toInt(&ok,16));
         //QString s = QString::number(year,10);
         //emit operationFinished(QByteArray::number(vol), QByteArray::number(fre));
-    settings<<QString::number(kValue,10)<<QString::number(rangeMax,10)<<QString::number(SaveGearsValue,10)<<QString::number(connectFrqcyOnOff,10)<<QString::number(saveTimeInterval,10);
+    settings<<QString::number(kValue)<<QString::number(rangeMax)<<QString::number(SaveGearsValue)<<QString::number(connectFrqcyOnOff)<<QString::number(saveTimeInterval);
     return settings;
 }
 
@@ -395,7 +410,9 @@ void PortAgent::Data_History(QByteArray data)
 
 void PortAgent::Data_TimePoint(QByteArray data)
 {
-    DB->insertTimeGroupTable(Raw_Data_TimePoint(&data));
+//    DB->insertTimeGroupTable(Raw_Data_TimePoint(&data));
+    emit addTreeNode(Raw_Data_TimePoint(&data));
+
 }
 
 void PortAgent::Data_Settings(QByteArray data)
