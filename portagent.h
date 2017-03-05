@@ -30,6 +30,7 @@ public:
     QSerialPort *port;
     QThread *ReciveDataThread;
     QThread *OperateDataThread;
+//    QThread *Give
     Database *DB;
     void setPort(QSerialPort *P);
     bool isStarted;
@@ -37,7 +38,9 @@ public:
     QMap<QString,int>* map;
 
 
+
 private:
+    QTimer *timer;
     QStringList *IDLIST;
     QString timeId; //格式 170227112140
     QString settings; //存储下位机要修改的参数设置
@@ -77,9 +80,12 @@ signals:
     addTreeNode(QStringList s);
     readInstanceData(QStringList data);
     deviceParameter(QStringList settings);
-
+    oder_message(int order,int id);
+    timeOut(int order,int id);
 public slots:
     void OrderExcuted();
+    void GiveOrdersSlot(int order,int id);
+    void TimeOutSlot();
 };
 
 #endif // PORTAGENT_H

@@ -1,6 +1,7 @@
 #include "portagent.h"
 #include "QDebug"
 #include "crccheck.h"
+#include "QMap"
 
 PortAgent::PortAgent(QSerialPort *Port)
 {
@@ -21,6 +22,7 @@ PortAgent::PortAgent()
 void PortAgent::setPort(QSerialPort *p)
 {
     this->port = p;
+
     qDebug()<<"port agent 已接管串口";
     qDebug()<<"当前线程ID:"<<QThread::currentThreadId();
     moveToThread(ReciveDataThread);
@@ -28,9 +30,9 @@ void PortAgent::setPort(QSerialPort *p)
     connect(port,SIGNAL(readyRead()),this,SLOT(OrderExcuted()),Qt::QueuedConnection);//消息队列模式
     qDebug()<<"消息队列模式--串口通信已建立";
     ReciveDataThread->start();
+    connect(this,SIGNAL(timeOut(int,int)),this,SLOT(GiveOrdersSlot(int,int)));
 
-
-
+    timer = new QTimer;
 
 }
 
@@ -70,6 +72,7 @@ void PortAgent::GiveOrders(int order,int id)
     }
 
     qDebug()<<"当前线程ID:"<<QThread::currentThreadId()<<" 以下是命令详情，"<<"命令条数："<<orders.length();
+
     for(int i=0;i<orders.length();i++)
     {
         QString s = orders.at(i);
@@ -77,6 +80,7 @@ void PortAgent::GiveOrders(int order,int id)
         port->write(order,order.length());
         qDebug()<<order.toHex().data();
     }
+
 }
 
 void PortAgent::OrderExcuted()
@@ -93,8 +97,8 @@ void PortAgent::OrderExcuted()
     QString crcCheck = crcg->crcChecksix(data.mid(0,len-2).toHex());
 
     int Flag = data.mid(1,1).toHex().toInt(&ok,16);
-    moveToThread(OperateDataThread);
-    OperateDataThread->start();
+//    moveToThread(OperateDataThread);
+//    OperateDataThread->start();
     if(crc == crcCheck)
     {
         qDebug()<<"ok";
@@ -119,6 +123,22 @@ void PortAgent::OrderExcuted()
     //emit readInstanceData();
     //如果是历史数据，直接往数据库里扔
 
+}
+
+void PortAgent::GiveOrdersSlot(int order, int id)
+{
+    GiveOrders(order,id);
+}
+
+void PortAgent::TimeOutSlot()
+{
+    qDebug()<<"TimeOutSlot called!";
+    for (QMap<QString, int>::const_iterator it = map->cbegin(), end = map->cend(); it != end; ++it) {
+        if(it.value()==1)
+        {
+            emit timeOut(ORDER_READ_INSTANCE_DATA,it.key().toInt());
+        }
+     }
 }
 
 //--------------------以下是封装的命令-----------------------------
@@ -276,6 +296,10 @@ QString PortAgent::Order_Read_Instance_Data(int id)
 void PortAgent::Order_Start_Read_Instance(int id)
 {
     qDebug()<<"MODID:"<<id<<" "<<"Order_Start_Collecting Gived";
+
+//    timer->start(1000);
+
+//    connect(timer,SIGNAL(timeout()),this,SLOT(TimeOutSlot()));
 
     GiveOrders(ORDER_READ_INSTANCE_DATA,id);
     //TODO: build the command message
