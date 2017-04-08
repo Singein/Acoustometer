@@ -28,7 +28,7 @@ class Widget;
 class Widget : public QWidget
 {
     Q_OBJECT
-
+QThread *portThread;
 public:
     explicit Widget(QWidget *parent = 0);
     ~Widget();
@@ -59,13 +59,6 @@ private:
      int get_device_id();//获取当前的设备的id
      QString get_device_id_toString();//同上，区别是返回qstring
      bool isInstance; //判断当前选中是否是在实时数据
-
-//     bool isStarted;//似乎没用了
-//     static int timeGroupTab[246][2];
-//     int groupCount;
-//     QString current_modId;
-
-
 
 
 signals:

@@ -14,6 +14,7 @@ Widget::Widget(QWidget *parent) :
     isAllDeviceWorking = false;
     viewInit();
     setDialog = new Settings;
+    portThread = new QThread;
     deviceSettingDialog = new DeviceParameter;
     portAgent = new PortAgent; //port在 get_devices_list函数中获取，先进行无参的构造是为了下面的connect函数建立
     portAgent->setMap(map_point);
@@ -180,11 +181,11 @@ void Widget::initTable()
     //----------------------测试--------------------------
     QStringList items;
     items<<"2017-2-27 12:18:56"<<"23"<<"56";
-    for(int i=0;i<20;i++)
-    {
+//    for(int i=0;i<20;i++)
+//    {
 
-        add_table_row(items);
-    }
+//        add_table_row(items);
+//    }
     //-----------------------------------------------------
     qDebug()<<"表格初始化成功";
 }
@@ -228,7 +229,7 @@ void Widget::viewInit()
     //------------------------------------------------
     qDebug()<<"-----------声强检测仪输出日志--------------";
     qDebug()<<"树状列表根结点初始化成功";
-//    initTree_test();
+    initTree_test();
     model->appendRow(devices);
     ui->treeView->setModel(model);
     initTable();
@@ -254,11 +255,11 @@ void Widget::fill_table_all(QStringList s)
 void Widget::add_table_row(QStringList items)
 {
     int rowCount = ui->tableWidget->rowCount()-1;
-    qDebug()<<"成功调用add_table_row!";
+//    qDebug()<<"成功调用add_table_row!";
     ui->tableWidget->setItem(rowCount, 0, new QTableWidgetItem(items.at(items.length()-1)));
     ui->tableWidget->setItem(rowCount, 1, new QTableWidgetItem(items.at(1)));
     ui->tableWidget->setItem(rowCount, 2, new QTableWidgetItem(items.at(2)));
-    qDebug()<<ui->tableWidget->rowCount();
+//    qDebug()<<ui->tableWidget->rowCount();
     ui->tableWidget->item(rowCount, 0)->setTextAlignment(Qt::AlignHCenter);
     ui->tableWidget->item(rowCount, 1)->setTextAlignment(Qt::AlignHCenter);
     ui->tableWidget->item(rowCount, 2)->setTextAlignment(Qt::AlignHCenter);
@@ -371,6 +372,7 @@ void Widget::start_and_stop_collecting()
         map.insert(QString::number(get_device_id()),1);
         ui->Button_import->setEnabled(false);
         get_current_item()->setText("实时数据 ==> 正在采集");
+//        portAgent->timer->start(1000);
         portAgent->GiveOrders(ORDER_START_COLLECTING,get_device_id());
     }
     else
@@ -379,6 +381,8 @@ void Widget::start_and_stop_collecting()
         ui->Button_start->setText("开始采集");
         ui->Button_import->setEnabled(true);
         get_current_item()->setText("实时数据");
+        portAgent->timer->stop();
+        portAgent->GiveOrders(ORDER_STOP_COLLECTING,get_device_id());
     }
 }
 
@@ -431,6 +435,8 @@ void Widget::get_devices_list()
 {
     portAgent->setPort(port);
     portAgent->GiveOrders(ORDER_GET_DEVICE_LIST,0);
+    portThread->start();
+
     qDebug()<<"获取设备列表请求已转交 port agent";
 }
 

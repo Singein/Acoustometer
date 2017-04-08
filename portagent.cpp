@@ -11,9 +11,11 @@ PortAgent::PortAgent(QSerialPort *Port)
 
 PortAgent::PortAgent()
 {
-    ReciveDataThread = new QThread;
-    OperateDataThread = new QThread;
     DB = new Database;
+
+
+    excuteThread = new QThread;
+    timer = new QTimer(excuteThread);
 //    DB->createConnection();
     qDebug()<<"当前线程ID:"<<QThread::currentThreadId()<<" port agent 已就位";
 //    DB->createTable();
@@ -25,14 +27,15 @@ void PortAgent::setPort(QSerialPort *p)
 
     qDebug()<<"port agent 已接管串口";
     qDebug()<<"当前线程ID:"<<QThread::currentThreadId();
-    moveToThread(ReciveDataThread);
+    this->moveToThread(excuteThread);
     qDebug()<<"正在移交至新线程";
-    connect(port,SIGNAL(readyRead()),this,SLOT(OrderExcuted()),Qt::QueuedConnection);//消息队列模式
-    qDebug()<<"消息队列模式--串口通信已建立";
-    ReciveDataThread->start();
-    connect(this,SIGNAL(timeOut(int,int)),this,SLOT(GiveOrdersSlot(int,int)));
+    connect(port,SIGNAL(readyRead()),this,SLOT(OrderExcuted()));//消息队列模式
+   qDebug()<<"消息队列模式--串口通信已建立";
 
-    timer = new QTimer;
+    connect(this,SIGNAL(timeOut(int,int)),this,SLOT(GiveOrdersSlot(int,int)));
+    connect(timer,SIGNAL(timeout()),this,SLOT(TimeOutSlot()));
+    excuteThread->start();
+
 
 }
 
@@ -89,7 +92,8 @@ void PortAgent::OrderExcuted()
     bool ok;
     qDebug()<<"当前线程ID:"<<QThread::currentThreadId();
     QByteArray data = port->readAll();
-    qDebug() << "----volum machine: data recived!"<<" data length: "<<data.length()<<" bytes";
+    qDebug() << "-----------------------data recived!"<<" data length: "<<data.length()<<" bytes";
+    qDebug() <<data.toHex();
     int len = data.length();//下面就是根据不同的长度，调用不同的数据处理方法 
 //    QByteArray noCRCCode = data.mid(0,len-2);
     CrcCheck *crcg = new CrcCheck();
@@ -99,22 +103,53 @@ void PortAgent::OrderExcuted()
     int Flag = data.mid(1,1).toHex().toInt(&ok,16);
 //    moveToThread(OperateDataThread);
 //    OperateDataThread->start();
+    if(crc!=crcCheck){
+        switch (Flag) {
+        case 3:
+            while(len<9){
+                data.append(port->readAll());
+                len = data.length();
+            }
+            break;
+        case 65:
+            while((len-4)%7!=0){
+                data.append(port->readAll());
+                len = data.length();
+            }
+            break;
+        case 66:
+            while((len-10)%2!=0){
+                data.append(port->readAll());
+                len = data.length();
+            }
+            break;
+        default:
+            break;
+        }
+
+        crc = data.mid(len-2,2).toHex().toUpper();
+        crcCheck = crcg->crcChecksix(data.mid(0,len-2).toHex());
+    }
+    qDebug()<<data.toHex();
     if(crc == crcCheck)
     {
-        qDebug()<<"ok";
-        qDebug()<<Flag;
+//        qDebug()<<"ok";
+//        qDebug()<<Flag;
         switch(Flag)
         {
             case 2: Data_ID(data);
             case 3: if(len>9) Data_Settings(data);
-                    else Data_Instance(data);break;
+                    Data_Instance(data);  break;
             //case 1: Data_History(data);break;
-            case 65: Data_TimePoint(data);break;
+            case 65:Data_TimePoint(data);break;
             case 66: Data_History(data);break;
             //case 3: Data_Settings(data);break;
   //      default: Error_Data(*rec);
         }
     }
+//    else{
+//        qDebug()<<"short";
+//    }
     //TODO:operation the data
     //第一步取到第一位 机器的ID
     //第二部判断功能码+寄存器，如果功能码是用来读取历史数据时间组的，把解析后的数据以QString格式发送
@@ -128,11 +163,12 @@ void PortAgent::OrderExcuted()
 void PortAgent::GiveOrdersSlot(int order, int id)
 {
     GiveOrders(order,id);
+    qDebug()<<"GiveOrderSlot is called!";
 }
 
 void PortAgent::TimeOutSlot()
 {
-    qDebug()<<"TimeOutSlot called!";
+    qDebug()<<"Timer is runing";
     for (QMap<QString, int>::const_iterator it = map->cbegin(), end = map->cend(); it != end; ++it) {
         if(it.value()==1)
         {
@@ -296,21 +332,17 @@ QString PortAgent::Order_Read_Instance_Data(int id)
 void PortAgent::Order_Start_Read_Instance(int id)
 {
     qDebug()<<"MODID:"<<id<<" "<<"Order_Start_Collecting Gived";
+    timer->start(1000);
 
-//    timer->start(1000);
-
-//    connect(timer,SIGNAL(timeout()),this,SLOT(TimeOutSlot()));
-
-    GiveOrders(ORDER_READ_INSTANCE_DATA,id);
-    //TODO: build the command message
-    //TODO: sender->write(message)
 }
 
 void PortAgent::Order_Stop_Read_Instance(int id)
 {
     qDebug()<<"MODID:"<<id<<" "<<"Order_Stop_Collecting Gived";
+    timer->stop();
     //TODO: build the command message
     //TODO: sender->write(message)
+
 }
 //---------------------------------------------------------------
 
@@ -425,7 +457,7 @@ void PortAgent::Data_Instance(QByteArray data)
 {
     QStringList dataList;
     dataList = Raw_Data_Instance(&data);
-    if(map->value(dataList.at(0)) == 1)  //判断实时数据的采集开关状态
+    if(true)  //判断实时数据的采集开关状态
     {
         QDateTime time = QDateTime::currentDateTime();//为了保证写入数据库的和界面实时更新的时间一致
         dataList<<time.toString("yyyy-MM-dd hh:mm:ss");
@@ -437,7 +469,7 @@ void PortAgent::Data_Instance(QByteArray data)
 void PortAgent::Data_History(QByteArray data)
 {
     Raw_Data_History(&data);
-
+    //DB->insertHistoryDataTable();
     //DB->insertHistoryDataTable();
 }
 

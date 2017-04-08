@@ -24,12 +24,11 @@ public:
     PortAgent(QSerialPort *Port);
     PortAgent();
     ~PortAgent();
+    QTimer *timer;
     void GiveOrders(int order,int id);
     void Set_Settings(QString Settings);//设置下位机即将要应用的参数
     void Set_timeId(QString TimeId);//设置下位机要获取的历史数据时间点
     QSerialPort *port;
-    QThread *ReciveDataThread;
-    QThread *OperateDataThread;
 //    QThread *Give
     Database *DB;
     void setPort(QSerialPort *P);
@@ -40,7 +39,7 @@ public:
 
 
 private:
-    QTimer *timer;
+    QThread *excuteThread;
     QStringList *IDLIST;
     QString timeId; //格式 170227112140
     QString settings; //存储下位机要修改的参数设置
@@ -80,7 +79,7 @@ signals:
     addTreeNode(QStringList s);
     readInstanceData(QStringList data);
     deviceParameter(QStringList settings);
-    oder_message(int order,int id);
+//    oder_message(int order,int id);
     timeOut(int order,int id);
 public slots:
     void OrderExcuted();
