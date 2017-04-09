@@ -15,7 +15,6 @@
 #include <QThread>
 #include <database.h>
 #include <QMap>
-#include <QTimer>
 
 class PortAgent:public QObject
 {
@@ -24,12 +23,10 @@ public:
     PortAgent(QSerialPort *Port);
     PortAgent();
     ~PortAgent();
-    QTimer *timer;
     void GiveOrders(int order,int id);
     void Set_Settings(QString Settings);//设置下位机即将要应用的参数
     void Set_timeId(QString TimeId);//设置下位机要获取的历史数据时间点
     QSerialPort *port;
-//    QThread *Give
     Database *DB;
     void setPort(QSerialPort *P);
     bool isStarted;
@@ -79,12 +76,14 @@ signals:
     addTreeNode(QStringList s);
     readInstanceData(QStringList data);
     deviceParameter(QStringList settings);
+
+    fakeTimer(int order,int id);
+
 //    oder_message(int order,int id);
-    timeOut(int order,int id);
+
 public slots:
     void OrderExcuted();
-    void GiveOrdersSlot(int order,int id);
-    void TimeOutSlot();
+    void fakeTimerSlot(int order,int id);
 };
 
 #endif // PORTAGENT_H

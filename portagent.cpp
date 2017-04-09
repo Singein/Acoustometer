@@ -13,9 +13,7 @@ PortAgent::PortAgent()
 {
     DB = new Database;
 
-
     excuteThread = new QThread;
-    timer = new QTimer(excuteThread);
 //    DB->createConnection();
     qDebug()<<"当前线程ID:"<<QThread::currentThreadId()<<" port agent 已就位";
 //    DB->createTable();
@@ -30,13 +28,9 @@ void PortAgent::setPort(QSerialPort *p)
     this->moveToThread(excuteThread);
     qDebug()<<"正在移交至新线程";
     connect(port,SIGNAL(readyRead()),this,SLOT(OrderExcuted()));//消息队列模式
-   qDebug()<<"消息队列模式--串口通信已建立";
-
-    connect(this,SIGNAL(timeOut(int,int)),this,SLOT(GiveOrdersSlot(int,int)));
-    connect(timer,SIGNAL(timeout()),this,SLOT(TimeOutSlot()));
+    qDebug()<<"消息队列模式--串口通信已建立";
+    connect(this,SIGNAL(fakeTimer(int,int)),this,SLOT(fakeTimerSlot(int,int)));
     excuteThread->start();
-
-
 }
 
 void PortAgent::Set_Settings(QString Settings)
@@ -89,6 +83,7 @@ void PortAgent::GiveOrders(int order,int id)
 void PortAgent::OrderExcuted()
 {
 //    isDataRecived->stop();
+    QThread::msleep(10);
     bool ok;
     qDebug()<<"当前线程ID:"<<QThread::currentThreadId();
     QByteArray data = port->readAll();
@@ -139,7 +134,7 @@ void PortAgent::OrderExcuted()
         {
             case 2: Data_ID(data);
             case 3: if(len>9) Data_Settings(data);
-                    Data_Instance(data);  break;
+                    Data_Instance(data);break;
             //case 1: Data_History(data);break;
             case 65:Data_TimePoint(data);break;
             case 66: Data_History(data);break;
@@ -160,22 +155,29 @@ void PortAgent::OrderExcuted()
 
 }
 
-void PortAgent::GiveOrdersSlot(int order, int id)
-{
-    GiveOrders(order,id);
-    qDebug()<<"GiveOrderSlot is called!";
-}
+//void PortAgent::TimeOutSlot()
+//{
+//    qDebug()<<"Timer is runing";
+//    for (QMap<QString, int>::const_iterator it = map->cbegin(), end = map->cend(); it != end; ++it) {
+//        if(it.value()==1)
+//        {
+//            emit timeOut(ORDER_READ_INSTANCE_DATA,it.key().toInt());
+//        }
+//     }
+//}
 
-void PortAgent::TimeOutSlot()
+
+void PortAgent::fakeTimerSlot(int order,int id)
 {
-    qDebug()<<"Timer is runing";
     for (QMap<QString, int>::const_iterator it = map->cbegin(), end = map->cend(); it != end; ++it) {
         if(it.value()==1)
         {
-            emit timeOut(ORDER_READ_INSTANCE_DATA,it.key().toInt());
+            QThread::msleep(1000);
+            GiveOrders(order,id);
         }
      }
 }
+
 
 //--------------------以下是封装的命令-----------------------------
 /*16进制字符补足长度*/
@@ -332,14 +334,14 @@ QString PortAgent::Order_Read_Instance_Data(int id)
 void PortAgent::Order_Start_Read_Instance(int id)
 {
     qDebug()<<"MODID:"<<id<<" "<<"Order_Start_Collecting Gived";
-    timer->start(1000);
+//    GiveOrders(ORDER_READ_INSTANCE_DATA,id);
+    emit fakeTimer(ORDER_READ_INSTANCE_DATA,id);
 
 }
 
 void PortAgent::Order_Stop_Read_Instance(int id)
 {
     qDebug()<<"MODID:"<<id<<" "<<"Order_Stop_Collecting Gived";
-    timer->stop();
     //TODO: build the command message
     //TODO: sender->write(message)
 
@@ -462,6 +464,7 @@ void PortAgent::Data_Instance(QByteArray data)
         QDateTime time = QDateTime::currentDateTime();//为了保证写入数据库的和界面实时更新的时间一致
         dataList<<time.toString("yyyy-MM-dd hh:mm:ss");
         emit readInstanceData(dataList);//把存入数据库的时间同时发给主界面
+        emit fakeTimer(ORDER_READ_INSTANCE_DATA,dataList.at(0).toInt());
         DB->insertInstanceDataTable(dataList.at(0)+"_instance",time,dataList.at(1),dataList.at(2));
     }
 }

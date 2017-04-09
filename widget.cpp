@@ -229,7 +229,7 @@ void Widget::viewInit()
     //------------------------------------------------
     qDebug()<<"-----------声强检测仪输出日志--------------";
     qDebug()<<"树状列表根结点初始化成功";
-    initTree_test();
+//    initTree_test();
     model->appendRow(devices);
     ui->treeView->setModel(model);
     initTable();
@@ -372,7 +372,6 @@ void Widget::start_and_stop_collecting()
         map.insert(QString::number(get_device_id()),1);
         ui->Button_import->setEnabled(false);
         get_current_item()->setText("实时数据 ==> 正在采集");
-//        portAgent->timer->start(1000);
         portAgent->GiveOrders(ORDER_START_COLLECTING,get_device_id());
     }
     else
@@ -381,7 +380,6 @@ void Widget::start_and_stop_collecting()
         ui->Button_start->setText("开始采集");
         ui->Button_import->setEnabled(true);
         get_current_item()->setText("实时数据");
-        portAgent->timer->stop();
         portAgent->GiveOrders(ORDER_STOP_COLLECTING,get_device_id());
     }
 }
