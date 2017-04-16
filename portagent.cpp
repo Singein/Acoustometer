@@ -3,12 +3,6 @@
 #include "crccheck.h"
 #include "QMap"
 
-PortAgent::PortAgent(QSerialPort *Port)
-{
-    this->port = Port;
-    DB = new Database;
-}
-
 PortAgent::PortAgent()
 {
     DB = new Database;
@@ -20,13 +14,8 @@ PortAgent::PortAgent()
 void PortAgent::setPort(QSerialPort *p)
 {
     port = p;
-    qDebug()<<"port agent 已接管串口";
-    qDebug()<<"当前线程ID:"<<QThread::currentThreadId();
-    qDebug()<<"正在移交至新线程";
-    connect(port,SIGNAL(readyRead()),this,SLOT(OrderExcuted()));//消息队列模式
-    qDebug()<<"消息队列模式--串口通信已建立";
+    connect(port,SIGNAL(readyRead()),this,SLOT(OrderExcuted()));
     connect(this,SIGNAL(fakeTimer(int,int)),this,SLOT(fakeTimerSlot(int,int)));
-
 }
 
 
@@ -77,29 +66,21 @@ void PortAgent::GiveOrders(int order,int id)
 
 }
 
-void PortAgent::GiveOrdersSlot(int order, int id)
-{
-    GiveOrders(order,id);
-}
 
 void PortAgent::OrderExcuted()
 {
-//    isDataRecived->stop();
+
     QThread::msleep(10);
     bool ok;
-    qDebug()<<"当前线程ID:"<<QThread::currentThreadId();
     QByteArray data = port->readAll();
-    qDebug() << "-----------------------data recived!"<<" data length: "<<data.length()<<" bytes";
-    qDebug() <<data.toHex();
-    int len = data.length();//下面就是根据不同的长度，调用不同的数据处理方法 
-//    QByteArray noCRCCode = data.mid(0,len-2);
+//    qDebug() << "data recived ---> "<<"data length: "<<data.length()<<" bytes";
+//    qDebug() <<data.toHex();
+    int len = data.length();    //下面就是根据不同的长度，调用不同的数据处理方法
     CrcCheck *crcg = new CrcCheck();
     QString crc = data.mid(len-2,2).toHex().toUpper();
     QString crcCheck = crcg->crcChecksix(data.mid(0,len-2).toHex());
 
     int Flag = data.mid(1,1).toHex().toInt(&ok,16);
-//    moveToThread(OperateDataThread);
-//    OperateDataThread->start();
     if(crc!=crcCheck){
         switch (Flag) {
         case 3:
@@ -127,34 +108,19 @@ void PortAgent::OrderExcuted()
         crc = data.mid(len-2,2).toHex().toUpper();
         crcCheck = crcg->crcChecksix(data.mid(0,len-2).toHex());
     }
-    qDebug()<<data.toHex();
+    qDebug()<<"data recived --> "<<data.toHex()<<"\ndata length: "<<data.length()<<" bytes";
     if(crc == crcCheck)
     {
-//        qDebug()<<"ok";
-//        qDebug()<<Flag;
         switch(Flag)
         {
             case 2: Data_ID(data);
             case 3: if(len>9) Data_Settings(data);
                     Data_Instance(data);break;
-            //case 1: Data_History(data);break;
             case 65:Data_TimePoint(data);break;
             case 66: Data_History(data);break;
-            //case 3: Data_Settings(data);break;
-  //      default: Error_Data(*rec);
+
         }
     }
-//    else{
-//        qDebug()<<"short";
-//    }
-    //TODO:operation the data
-    //第一步取到第一位 机器的ID
-    //第二部判断功能码+寄存器，如果功能码是用来读取历史数据时间组的，把解析后的数据以QString格式发送
-    //emit addTreeNode(s);
-    //如果是实时数据，往数据库里扔，扔完然后发信号
-    //emit readInstanceData();
-    //如果是历史数据，直接往数据库里扔
-
 }
 
 void PortAgent::fakeTimerSlot(int order,int id)
@@ -483,6 +449,8 @@ void PortAgent::Data_ID(QByteArray rec)
 
 }
 //----------------------------------------------------------------
+
+
 
 //--------------------以下是错误处理------------------------------
 //QString PortAgent::Error_Data(QByteArray* rec){
