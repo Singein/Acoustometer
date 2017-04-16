@@ -1,6 +1,5 @@
 #ifndef PORTAGENT_H
 #define PORTAGENT_H
-
 #define ORDER_GET_DEVICE_LIST 0
 #define ORDER_UPLOAD_HISTORY_DATA 1
 #define ORDER_START_COLLECTING 2
@@ -36,7 +35,7 @@ public:
 
 
 private:
-    QThread *excuteThread;
+    QThread *thread;
     QStringList *IDLIST;
     QString timeId; //格式 170227112140
     QString settings; //存储下位机要修改的参数设置
@@ -82,6 +81,7 @@ signals:
 //    oder_message(int order,int id);
 
 public slots:
+    void GiveOrdersSlot(int order, int id);
     void OrderExcuted();
     void fakeTimerSlot(int order,int id);
 };

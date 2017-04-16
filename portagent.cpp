@@ -12,26 +12,23 @@ PortAgent::PortAgent(QSerialPort *Port)
 PortAgent::PortAgent()
 {
     DB = new Database;
-
-    excuteThread = new QThread;
-//    DB->createConnection();
-    qDebug()<<"当前线程ID:"<<QThread::currentThreadId()<<" port agent 已就位";
-//    DB->createTable();
+    thread = new QThread;
+    this->moveToThread(thread);
+    thread->start();
 }
 
 void PortAgent::setPort(QSerialPort *p)
 {
-    this->port = p;
-
+    port = p;
     qDebug()<<"port agent 已接管串口";
     qDebug()<<"当前线程ID:"<<QThread::currentThreadId();
-    this->moveToThread(excuteThread);
     qDebug()<<"正在移交至新线程";
     connect(port,SIGNAL(readyRead()),this,SLOT(OrderExcuted()));//消息队列模式
     qDebug()<<"消息队列模式--串口通信已建立";
     connect(this,SIGNAL(fakeTimer(int,int)),this,SLOT(fakeTimerSlot(int,int)));
-    excuteThread->start();
+
 }
+
 
 void PortAgent::Set_Settings(QString Settings)
 {
@@ -78,6 +75,11 @@ void PortAgent::GiveOrders(int order,int id)
         qDebug()<<order.toHex().data();
     }
 
+}
+
+void PortAgent::GiveOrdersSlot(int order, int id)
+{
+    GiveOrders(order,id);
 }
 
 void PortAgent::OrderExcuted()
@@ -154,18 +156,6 @@ void PortAgent::OrderExcuted()
     //如果是历史数据，直接往数据库里扔
 
 }
-
-//void PortAgent::TimeOutSlot()
-//{
-//    qDebug()<<"Timer is runing";
-//    for (QMap<QString, int>::const_iterator it = map->cbegin(), end = map->cend(); it != end; ++it) {
-//        if(it.value()==1)
-//        {
-//            emit timeOut(ORDER_READ_INSTANCE_DATA,it.key().toInt());
-//        }
-//     }
-//}
-
 
 void PortAgent::fakeTimerSlot(int order,int id)
 {

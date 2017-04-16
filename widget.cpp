@@ -28,6 +28,7 @@ Widget::Widget(QWidget *parent) :
     connect(portAgent,SIGNAL(addTreeNode(QStringList)),this,SLOT(initTree(QStringList)));//当有列表数据收到后触发
     connect(portAgent,SIGNAL(readInstanceData(QStringList)),this,SLOT(update_instance_data(QStringList)));//更新当前的实时数据
     connect(this,SIGNAL(itemCheckStatusChanged(QString)),this,SLOT(read_history_data(QString)));//这个用来判断树状表中节点状态变化，槽函数 没想好怎么写
+    connect(this,SIGNAL(orders(int,int)),portAgent,SLOT(GiveOrdersSlot(int,int)),Qt::QueuedConnection);
 }
 
 Widget::~Widget()
@@ -372,7 +373,8 @@ void Widget::start_and_stop_collecting()
         map.insert(QString::number(get_device_id()),1);
         ui->Button_import->setEnabled(false);
         get_current_item()->setText("实时数据 ==> 正在采集");
-        portAgent->GiveOrders(ORDER_START_COLLECTING,get_device_id());
+//        portAgent->GiveOrders(ORDER_START_COLLECTING,get_device_id());
+        emit orders(ORDER_START_COLLECTING,get_device_id());
     }
     else
     {
@@ -380,7 +382,9 @@ void Widget::start_and_stop_collecting()
         ui->Button_start->setText("开始采集");
         ui->Button_import->setEnabled(true);
         get_current_item()->setText("实时数据");
-        portAgent->GiveOrders(ORDER_STOP_COLLECTING,get_device_id());
+//        portAgent->GiveOrders(ORDER_STOP_COLLECTING,get_device_id());
+        emit orders(ORDER_STOP_COLLECTING,get_device_id());
+
     }
 }
 
@@ -432,9 +436,8 @@ void Widget::super_show()
 void Widget::get_devices_list()
 {
     portAgent->setPort(port);
-    portAgent->GiveOrders(ORDER_GET_DEVICE_LIST,0);
-    portThread->start();
-
+//    portAgent->GiveOrders(ORDER_GET_DEVICE_LIST,0);
+    emit orders(ORDER_GET_DEVICE_LIST,0);
     qDebug()<<"获取设备列表请求已转交 port agent";
 }
 
