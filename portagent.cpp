@@ -99,7 +99,7 @@ void PortAgent::OrderExcuted()
             }
             break;
         case 66:
-            while((len-10)%2!=0){
+            while((len-12)%4!=0){
                 data.append(port->readAll());
                 len = data.length();
             }
@@ -210,16 +210,17 @@ QString PortAgent::Order_Change_Settings(int id)
     changeDataRequest.append(modId);
     changeDataRequest.append("10"); //功能码
     changeDataRequest.append("0000");  //寄存器地址
-    changeDataRequest.append("0010");  //寄存器数目
-    changeDataRequest.append("20");  //字节数
+    changeDataRequest.append("0014");  //寄存器数目
+    changeDataRequest.append("28");  //字节数
     changeDataRequest.append(setting[0]);  //寄存器[0]位k值
-    changeDataRequest.append(setting[2]);   //档位 寄存器
-    changeDataRequest.append(setting[5]);  //自动关机时间
+    changeDataRequest.append(setting[1]);   //量程最大值
+    changeDataRequest.append(setting[2]);  //档位
     changeDataRequest.append(setting[3]);  //频率关联状态
     changeDataRequest.append(setting[4]); //存储时间间隔
-    changeDataRequest.append(setting[1]); //测量量程最大值
+    changeDataRequest.append(setting[5]); //自动关机时间
     modId = expand(modId);
     changeDataRequest.append(modId);    //485id
+    changeDataRequest.append("0000");
     changeDataRequest.append(dateTime[0]);
     changeDataRequest.append(dateTime[1]);
     changeDataRequest.append(dateTime[2]);
@@ -227,6 +228,7 @@ QString PortAgent::Order_Change_Settings(int id)
     changeDataRequest.append(clockTime[1]);
     changeDataRequest.append(clockTime[2]);
     changeDataRequest.append(crc->crcChecksix(changeDataRequest));
+    qDebug()<<changeDataRequest;
     return changeDataRequest;
 }
 
@@ -306,7 +308,7 @@ QStringList PortAgent::Raw_Data_Instance(QByteArray* rec)
 //    QString date = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm::ss");
         //QString s = QString::number(year,10);
         //emit operationFinished(QByteArray::number(vol), QByteArray::number(fre));
-    instanceData<<QString::number(modid)<<QString::number(vol)<<QString::number(fre);
+    instanceData<<QString::number(vol)<<QString::number(fre)<<QString::number(modid);
     qDebug()<<instanceData;
     return instanceData;
 }
@@ -340,22 +342,45 @@ QStringList PortAgent::Raw_Data_TimePoint(QByteArray* rec)
 
 QStringList PortAgent::Raw_Data_History(QByteArray* rec)
 {
-    QByteArray noCRCCode = rec->mid(0,7);
+    QByteArray noCRCCode = rec->mid(0,rec->length()-2);
     QStringList timePointTable;
     bool ok;
     int modId = noCRCCode.mid(0,1).toHex().toInt(&ok,16);
     int fun = noCRCCode.mid(1,1).toHex().toInt(&ok,16);
-    int len = noCRCCode.mid(10,1).toHex().toInt(&ok,16);
     int year = noCRCCode.mid(2,1).toHex().toInt(&ok,16);
     int month = noCRCCode.mid(3,1).toHex().toInt(&ok,16);
     int day = noCRCCode.mid(4,1).toHex().toInt(&ok,16);
     int hour = noCRCCode.mid(5,1).toHex().toInt(&ok,16);
     int minute = noCRCCode.mid(6,1).toHex().toInt(&ok,16);
     int second = noCRCCode.mid(7,1).toHex().toInt(&ok,16);
+    int timeInterval = noCRCCode.mid(8,1).toHex().toInt(&ok,16);
+    int len = noCRCCode.mid(9,1).toHex().toInt(&ok,16);
+    timePointTable<<QString::number(modId,10)<<QString::number(len,10);
+
+    QString y = QString::number(year,10);
+    QString m = QString::number(month,10);
+    QString d = QString::number(day,10);
+    QString h = QString::number(hour,10);
+    QString M = QString::number(minute,10);
+    QString s = QString::number(second,10);
+
+    if(y.length()<4)
+        y = "20"+y;
+    if(m.length()<2)
+        m = "0"+m;
+    if(d.length()<2)
+        d = "0"+d;
+    if(h.length()<2)
+        h = "0"+h;
+    if(M.length()<2)
+        M = "0"+M;
+    if(s.length()<2)
+        s = "0"+s;
+
     for(int i=0;i<len;i++){
-        QString timePoint = QString("%1-%2-%3 %4:%5:%6 %7 %8").arg(QString::number(year,10)).arg(QString::number(month,10)).arg(QString::number(day,10)).arg(QString::number(hour,10)).arg(QString::number(minute,10)).arg(QString::number(second,10)).arg(QString::number(noCRCCode.mid(10+len*2,1).toInt(&ok,16)*100,10)).arg(QString::number(noCRCCode.mid(11+len*2,1).toInt(&ok,16)*100,10));
+        QString timePoint = QString("%1 %2 %3-%4-%5 %6:%7:%8").arg(QString::number(((double)noCRCCode.mid(10+i*4,2).toHex().toInt(&ok,16))/100)).arg(QString::number(((double)noCRCCode.mid(12+i*4,2).toHex().toInt(&ok,16))/100)).arg(y).arg(m).arg(d).arg(h).arg(M).arg(s);
         timePointTable<<timePoint;
-        second+=3;
+        second+=timeInterval;
         if(second>=60){second-=60;minute+=1;
         }if(minute>=60){minute-=60;hour+=1;
         }if(hour>=24){hour-=24;day+=1;
@@ -369,6 +394,7 @@ QStringList PortAgent::Raw_Data_History(QByteArray* rec)
             if(day>28){day-=28;month+=1;}
         }if(month>12){month-=1;year+=1;}
     }
+    qDebug()<<timePointTable;
     return timePointTable;
 }
 
@@ -383,12 +409,12 @@ QStringList PortAgent::Raw_Data_Settings(QByteArray* rec)
 //    for(int i = 0;i < num;i++){settings<<QString::number(noCRCdata.mid(3+2*i,2).toInt(&ok,16));}
     int kValue = (noCRCdata.mid(3,2).toHex().toInt(&ok,16));
     double rangeMax = (double)(noCRCdata.mid(5,2).toHex().toInt(&ok,16))/100;
-    int SaveGearsValue = (noCRCdata.mid(7,2).toHex().toInt(&ok,16));
-    int connectFrqcyOnOff = (noCRCdata.mid(9,2).toHex().toInt(&ok,16));
+    int connectFrqcyOnOff = (noCRCdata.mid(7,2).toHex().toInt(&ok,16));
+    int SaveGearsValue = (noCRCdata.mid(9,2).toHex().toInt(&ok,16));
     int saveTimeInterval = (noCRCdata.mid(11,2).toHex().toInt(&ok,16));
         //QString s = QString::number(year,10);
         //emit operationFinished(QByteArray::number(vol), QByteArray::number(fre));
-    settings<<QString::number(kValue)<<QString::number(rangeMax)<<QString::number(SaveGearsValue)<<QString::number(connectFrqcyOnOff)<<QString::number(saveTimeInterval);
+    settings<<QString::number(kValue)<<QString::number(rangeMax)<<QString::number(connectFrqcyOnOff)<<QString::number(SaveGearsValue)<<QString::number(saveTimeInterval);
     return settings;
 }
 
@@ -411,15 +437,19 @@ void PortAgent::Data_Instance(QByteArray data)
         dataList<<time.toString("yyyy-MM-dd hh:mm:ss");
         emit readInstanceData(dataList);//把存入数据库的时间同时发给主界面
         emit fakeTimer(ORDER_READ_INSTANCE_DATA,dataList.at(0).toInt());
-        DB->insertInstanceDataTable(dataList.at(0)+"_instance",time,dataList.at(1),dataList.at(2));
+        DB->insertInstanceDataTable(dataList.at(2)+"_instance",time,dataList.at(0),dataList.at(1));
     }
 }
 
 void PortAgent::Data_History(QByteArray data)
 {
-    Raw_Data_History(&data);
-    //DB->insertHistoryDataTable();
-    //DB->insertHistoryDataTable();
+    QStringList DataList = Raw_Data_History(&data);
+    emit fillTable(DataList);
+    for(int i = 2;i<DataList.at(1).toInt();i++){
+        QStringList list = DataList.at(i).split(" ");
+        DB->insertHistoryDataTable(DataList.at(0)+"_history",list.at(0)+list.at(1),list.at(2),list.at(3));
+    }
+        //DB->insertHistoryDataTable();
 }
 
 void PortAgent::Data_TimePoint(QByteArray data)

@@ -54,7 +54,6 @@ private:
      QSerialPort *port;//串口
      void initTable();//用来初始化表格
      void viewInit();//用来初始化树状列表
-     void fill_table_all(QStringList s);//一整张表填充
      void add_table_row(QStringList items);//一行一行填充
      int get_device_id();//获取当前的设备的id
      QString get_device_id_toString();//同上，区别是返回qstring
@@ -68,6 +67,7 @@ signals:
 private slots:
      void initTree_test();
      void initTree(QStringList nodes);//初始化树状列表
+     void fill_table_all(QStringList s);//一整张表填充
      void on_treeView_customContextMenuRequested(const QPoint &pos);//右键菜单
      void port_setting_changed(QSerialPort *Port);//串口设置改变
      void device_setting_changed(QString s);//设备的设置改变

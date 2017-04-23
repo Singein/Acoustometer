@@ -29,6 +29,7 @@ Widget::Widget(QWidget *parent) :
     connect(portAgent,SIGNAL(readInstanceData(QStringList)),this,SLOT(update_instance_data(QStringList)));//更新当前的实时数据
     connect(this,SIGNAL(itemCheckStatusChanged(QString)),this,SLOT(read_history_data(QString)));//这个用来判断树状表中节点状态变化
     connect(this,SIGNAL(orders(int,int)),portAgent,SLOT(GiveOrders(int,int)),Qt::QueuedConnection);
+    connect(portAgent,SIGNAL(fillTable(QStringList)),this,SLOT(fill_table_all(QStringList)));
 }
 
 Widget::~Widget()
@@ -131,20 +132,6 @@ void Widget::current_index_changed(QModelIndex currentIndex)
 
 void Widget::initTree(QStringList nodes)
 {   
-//    groupCount ++;
-
-//    int modId = nodes.at(0).toInt();
-//    int groups = nodes.at(2).toInt();
-//    int timeInterval = nodes.at(4).toInt();
-
-//    timeGroupTab[modId][0] ++;
-//    timeGroupTab[modId][1] = timeInterval;
-
-
-//    QDateTime time = QDateTime::fromString(nodes.at(1),"yyyy-MM-dd hh:mm:ss");
-
-
-//    map->insert(nodes.at(0).toInt(),false);
     QStandardItem *device = new QStandardItem("测量仪 "+nodes.at(0)); //这条是id，设备
     map.insert(nodes.at(0),0);
     QStandardItem *instance_data = new QStandardItem("实时数据");//这条是实时数据
@@ -153,7 +140,6 @@ void Widget::initTree(QStringList nodes)
     instance_data->setEditable(false);
     history_data->setEditable(false);
     history_data->setCheckable(true);
-
     for(int i = 1;i < nodes.length();i++)
     {   
         //逐条添加历史数据时间点
@@ -167,7 +153,6 @@ void Widget::initTree(QStringList nodes)
     devices->appendRow(device);
     model->appendRow(devices);//刷新modle
     ui->treeView->setModel(model);//刷新treeview
-
     qDebug()<<"设备列表和设备时间组列表生成";
 }
 
@@ -182,15 +167,6 @@ void Widget::initTable()
     ui->tableWidget->verticalHeader()->setVisible(false);
     ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     ui->tableWidget->horizontalHeader()->setSectionsMovable(true);
-    //----------------------测试--------------------------
-    QStringList items;
-    items<<"2017-2-27 12:18:56"<<"23"<<"56";
-//    for(int i=0;i<20;i++)
-//    {
-
-//        add_table_row(items);
-//    }
-    //-----------------------------------------------------
     qDebug()<<"表格初始化成功";
 }
 
@@ -242,28 +218,24 @@ void Widget::viewInit()
 
 void Widget::fill_table_all(QStringList s)
 {
-    ui->tableWidget->clear();
-    initTable();
-    for(int i = 0;i<s.length();i++)
+    int rowCount = ui->tableWidget->rowCount();
+    qDebug()<<rowCount;
+    for(int i = 2;i<s.length();i++)
     {
-        QStringList items = s.at(i).split(" ");
-        ui->tableWidget->setItem(i, 0, new QTableWidgetItem(items[0]));
-        ui->tableWidget->setItem(i, 1, new QTableWidgetItem(items[1]));
-        ui->tableWidget->setItem(i, 2, new QTableWidgetItem(items[2]));
-        ui->tableWidget->item(i, 0)->setTextAlignment(Qt::AlignHCenter);
-        ui->tableWidget->item(i, 1)->setTextAlignment(Qt::AlignHCenter);
-        ui->tableWidget->item(i, 2)->setTextAlignment(Qt::AlignHCenter);
+        QStringList items;
+        items<<s.at(i).split(" ").at(0);
+        items<<s.at(i).split(" ").at(1);
+        items<<s.at(i).split(" ").at(2)+" "+s.at(i).split(" ").at(3);
+        add_table_row(items);
     }
 }
 
 void Widget::add_table_row(QStringList items)
 {
     int rowCount = ui->tableWidget->rowCount()-1;
-//    qDebug()<<"成功调用add_table_row!";
     ui->tableWidget->setItem(rowCount, 0, new QTableWidgetItem(items.at(items.length()-1)));
-    ui->tableWidget->setItem(rowCount, 1, new QTableWidgetItem(items.at(1)));
-    ui->tableWidget->setItem(rowCount, 2, new QTableWidgetItem(items.at(2)));
-//    qDebug()<<ui->tableWidget->rowCount();
+    ui->tableWidget->setItem(rowCount, 1, new QTableWidgetItem(items.at(0)));
+    ui->tableWidget->setItem(rowCount, 2, new QTableWidgetItem(items.at(1)));
     ui->tableWidget->item(rowCount, 0)->setTextAlignment(Qt::AlignHCenter);
     ui->tableWidget->item(rowCount, 1)->setTextAlignment(Qt::AlignHCenter);
     ui->tableWidget->item(rowCount, 2)->setTextAlignment(Qt::AlignHCenter);
@@ -272,7 +244,7 @@ void Widget::add_table_row(QStringList items)
 
 void Widget::update_instance_data(QStringList s)
 {
-    if(s.at(0) == get_device_id_toString() && isInstance)
+    if(s.at(2) == get_device_id_toString() && isInstance)
         add_table_row(s);
 }
 

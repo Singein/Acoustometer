@@ -13,6 +13,7 @@ public:
     bool isTableExist(QString tableName);
     void createDataTable(QString tableName);
     void createTimeGroupTable();
+    void createHistoryDataTable(QString tableName);
     void insertInstanceDataTable(QString tableName,QDateTime time,QString frequency,QString soundStrength);
     void insertHistoryDataTable(QString tableName,QString time,QString frequency,QString soundStrength);
     bool insertTimeGroupTable(QStringList timeGroups);
@@ -24,7 +25,6 @@ public:
     QStringList getTimePointInfo(QString tableName);
     QString queryDataTable(QString tableName,QString time);
     QStringList getSelectedData(QString tableName,QStringList timePoints);
-//    void queryTableTimeCorp(QString tableName,QString startTime,QString endTime);
     void dropTable(QString tableName);
     ~Database();
 private:

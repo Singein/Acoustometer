@@ -57,6 +57,16 @@ void Database::createTimeGroupTable(){
     qDebug()<<"TimeGroupTable 已建立";
 }
 
+/*建立历史数据表*/
+void Database::createHistoryDataTable(QString tableName){
+    db.open();
+    QSqlQuery query(db);
+    if(!db.open()){
+        QMessageBox::critical(0,"cannot open database","Unable to establish a database connect",QMessageBox::Cancel);
+    }
+    query.exec(QString("create table "+tableName+" (time varchar(30) primary key,sound varchar(10),fre varchar(10)"));//历史数据表
+}
+
 /*插入实时数据*/
 void Database::insertInstanceDataTable(QString tableName,QDateTime currentTime,QString frequency,QString soundStrength){
     db.open();
@@ -70,12 +80,12 @@ void Database::insertInstanceDataTable(QString tableName,QDateTime currentTime,Q
     }
 }
 
-void Database::insertHistoryDataTable(QString tableName, QString time, QString frequency, QString soundStrength)
+void Database::insertHistoryDataTable(QString tableName, QString time, QString soundStrength, QString frequency)
 {
     db.open();
     QSqlQuery query(db);
     if(db.open()){
-        query.exec(QString("insert into "+tableName+" values('"+time+"','"+frequency+"','"+soundStrength+"')"));
+        query.exec(QString("insert into "+tableName+" values('"+time+"','"+soundStrength+"','"+frequency+"')"));
     }else{
         QMessageBox::critical(0,"Cannot open database","Unable to establish a database connection.",QMessageBox::Cancel);
     }
@@ -97,12 +107,6 @@ bool Database::insertTimeGroupTable(QStringList timeGroups){
     return ok;
 }
 
-/*更改数据,没用的话可以删掉*/
-void Database::updataTable(QString tableName,QString columnName,QString time,QString change){
-    QSqlQuery query(db);
-    db.open();
-    query.exec(QString("update table "+tableName+" SET "+columnName+" = "+change+" WHERE time = '"+time+"'"));
-}
 
 /*删除实时数据表某一行数据*/
 void Database::deleteTable(QString tableName,QString columnName,QString time){
@@ -172,17 +176,14 @@ QStringList Database::getTimePointInfo(QString tableName){
     QString data0;
     QString data1;
     QString data2;
-    QString data3;
     query.exec(QString("select * from "+tableName));
     QStringList list;
     while(query.next()){
         data0 = query.value(0).toString();
         data1 = query.value(1).toString();
         data2 = query.value(2).toString();
-        data3 = query.value(3).toString();
-        data2.append(",");
-        data2.append(data3);
-        list<<data2;
+        data0.append(" ").append(data1).append(" ").append(data2);
+        list<<data0;
     }
     return list;
 }

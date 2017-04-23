@@ -72,10 +72,12 @@ private:
 signals:
     taskFinished(int order,QString s);
     addTreeNode(QStringList s);
+    fillTable(QStringList s);
     readInstanceData(QStringList data);
     deviceParameter(QStringList settings);
     fakeTimer(int order,int id);
     send();
+
 
 
 
