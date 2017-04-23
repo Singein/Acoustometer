@@ -83,12 +83,15 @@ void Widget::current_index_changed(QModelIndex currentIndex)
         if(get_current_item()->checkState()==0)
         {
             get_current_item()->setCheckState(Qt::CheckState::Checked);
+
+            portAgent->rowcount = get_current_item()->rowCount();
             for(int i=0;i<get_current_item()->rowCount();i++)
             {
                 QStandardItem *currentItem = get_current_item()->child(i);
                 currentItem->setCheckState(Qt::CheckState::Checked);
                 portAgent->Set_timeId(currentItem->text());
-                portAgent->GiveOrders(ORDER_UPLOAD_HISTORY_DATA,get_device_id());
+                emit orders(ORDER_UPLOAD_HISTORY_DATA,get_device_id());
+//                portAgent->GiveOrders(ORDER_UPLOAD_HISTORY_DATA,get_device_id());
 //                QThread::msleep(10000);
             }
             ui->treeView->expand(ui->treeView->currentIndex());

@@ -14,30 +14,30 @@
 #include <QThread>
 #include <database.h>
 #include <QMap>
+#include <QQueue>
 
 class PortAgent:public QObject
 {
      Q_OBJECT
 public:
-//    PortAgent(QSerialPort *Port);
     PortAgent();
     ~PortAgent();
-    void Set_Settings(QString Settings);//设置下位机即将要应用的参数
-    void Set_timeId(QString TimeId);//设置下位机要获取的历史数据时间点
     QSerialPort *port;
     Database *DB;
+    QMap<QString,int>* map;
+    void Set_Settings(QString Settings);//设置下位机即将要应用的参数
+    void Set_timeId(QString TimeId);//设置下位机要获取的历史数据时间点
     void setPort(QSerialPort *P);
     bool isStarted;
     void setMap(QMap<QString,int>* Map);
-    QMap<QString,int>* map;
-
-
+    int rowcount;
 
 private:
     QThread *thread;
     QStringList *IDLIST;
     QString timeId; //格式 170227112140
     QString settings; //存储下位机要修改的参数设置
+    QQueue<QString> orderList;
     QString Order_Get_Settings(int id);//获取当前下位机参数指令
     QString Order_Change_Settings(int id);//更改下位机参数指令
     QString Order_Get_Device_List(int id);//获取时间组列表数据
@@ -68,12 +68,14 @@ private:
     QString zero;
     bool ok;
 
+
 signals:
     taskFinished(int order,QString s);
     addTreeNode(QStringList s);
     readInstanceData(QStringList data);
     deviceParameter(QStringList settings);
     fakeTimer(int order,int id);
+    send();
 
 
 
@@ -81,6 +83,7 @@ public slots:
     void GiveOrders(int order,int id);
     void OrderExcuted();
     void fakeTimerSlot(int order,int id);
+    void SendOrders();
 };
 
 #endif // PORTAGENT_H

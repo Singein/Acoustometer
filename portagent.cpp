@@ -6,6 +6,7 @@
 PortAgent::PortAgent()
 {
     DB = new Database;
+    rowcount = 1;
     thread = new QThread;
     this->moveToThread(thread);
     thread->start();
@@ -16,8 +17,8 @@ void PortAgent::setPort(QSerialPort *p)
     port = p;
     connect(port,SIGNAL(readyRead()),this,SLOT(OrderExcuted()));
     connect(this,SIGNAL(fakeTimer(int,int)),this,SLOT(fakeTimerSlot(int,int)));
+    connect(this,SIGNAL(send()),this,SLOT(SendOrders()));
 }
-
 
 void PortAgent::Set_Settings(QString Settings)
 {
@@ -42,34 +43,36 @@ PortAgent::~PortAgent()
 
 void PortAgent::GiveOrders(int order,int id)
 {
-    QStringList orders;
     switch (order) {
-    case ORDER_GET_DEVICE_LIST:orders.append(Order_Get_Device_List(id));break;
-    case ORDER_UPLOAD_HISTORY_DATA:orders.append(Order_Upload_History_Data(id));break;
+    case ORDER_GET_DEVICE_LIST:orderList.enqueue(Order_Get_Device_List(id));break;
+    case ORDER_UPLOAD_HISTORY_DATA:orderList.enqueue(Order_Upload_History_Data(id));break;
     case ORDER_START_COLLECTING:Order_Start_Read_Instance(id);break;
     case ORDER_STOP_COLLECTING:Order_Stop_Read_Instance(id);break;
-    case ORDER_CHANGE_SETTINGS:orders.append(Order_Change_Settings(id));break;
-    case ORDER_GET_SETTINGS:orders.append(Order_Get_Settings(id));break;
-    case ORDER_READ_INSTANCE_DATA:orders.append(Order_Read_Instance_Data(id));break;
+    case ORDER_CHANGE_SETTINGS:orderList.enqueue(Order_Change_Settings(id));break;
+    case ORDER_GET_SETTINGS:orderList.enqueue(Order_Get_Settings(id));break;
+    case ORDER_READ_INSTANCE_DATA:orderList.enqueue(Order_Read_Instance_Data(id));break;
     default:break;
     }
-
-    qDebug()<<"当前线程ID:"<<QThread::currentThreadId()<<" 以下是命令详情，"<<"命令条数："<<orders.length();
-
-    for(int i=0;i<orders.length();i++)
+    if(orderList.length()==rowcount)
     {
-        QString s = orders.at(i);
+        emit send();
+        rowcount = 1;
+    }
+}
+
+void PortAgent::SendOrders()
+{
+    if(!orderList.isEmpty())
+    {
+        QString s = orderList.dequeue();
         QByteArray order = QByteArray::fromHex(s.toLatin1().data());
         port->write(order,order.length());
         qDebug()<<order.toHex().data();
     }
-
 }
-
 
 void PortAgent::OrderExcuted()
 {
-
     QThread::msleep(10);
     bool ok;
     QByteArray data = port->readAll();
@@ -109,8 +112,8 @@ void PortAgent::OrderExcuted()
         crcCheck = crcg->crcChecksix(data.mid(0,len-2).toHex());
     }
     qDebug()<<"data recived --> "<<data.toHex()<<"\ndata length: "<<data.length()<<" bytes";
-    if(crc == crcCheck)
-    {
+//    if(crc == crcCheck)
+//    {
         switch(Flag)
         {
             case 2: Data_ID(data);
@@ -120,7 +123,9 @@ void PortAgent::OrderExcuted()
             case 66: Data_History(data);break;
 
         }
-    }
+//    }
+
+    emit send();
 }
 
 void PortAgent::fakeTimerSlot(int order,int id)
@@ -162,9 +167,6 @@ QString PortAgent::modIdExpand(int id){
 
 QString PortAgent::Order_Get_Settings(int id)
 {
-    qDebug()<<"MODID:"<<id<<" "<<"Order_Get_Settings called";
-    //TODO: build the command message
-    //TODO: sender->write(message)
     QString readDataRequest;
     CrcCheck *crc = new CrcCheck();
     QString modId = QString::number(id,16);
@@ -184,10 +186,6 @@ QString PortAgent::Order_Get_Settings(int id)
 
 QString PortAgent::Order_Change_Settings(int id)
 {
-
-    qDebug()<<"MODID:"<<id<<" "<<"Order_Change_Settings Gived";
-    //TODO: build the command message
-    //TODO: sender->write(message)
     qDebug()<<this->settings;
     CrcCheck *crc = new CrcCheck();
     QStringList setting = settings.split(",");
@@ -251,10 +249,6 @@ QString PortAgent::Order_Get_Time_Point(int id){
 
 QString PortAgent::Order_Upload_History_Data(int id)//170301120000
 {
-
-    qDebug()<<"MODID:"<<id<<" "<<"Order_Upload_Selected_Data Gived";
-    //TODO: build the command message
-    //TODO: sender->write(message)
     CrcCheck *crc = new CrcCheck();
     QString UploadRequest;
     UploadRequest.append(modIdExpand(id)).append("42"); //添加modid与功能码42
@@ -274,7 +268,6 @@ QString PortAgent::Order_Upload_History_Data(int id)//170301120000
 
 QString PortAgent::Order_Read_Instance_Data(int id)
 {
-    qDebug()<<"MODID:"<<id<<" "<<"Order_Read_Instance_Data Gived";
     QString readDataRequest;
     CrcCheck *crc = new CrcCheck();
     readDataRequest.append(modIdExpand(id));
@@ -298,9 +291,6 @@ void PortAgent::Order_Start_Read_Instance(int id)
 void PortAgent::Order_Stop_Read_Instance(int id)
 {
     qDebug()<<"MODID:"<<id<<" "<<"Order_Stop_Collecting Gived";
-    //TODO: build the command message
-    //TODO: sender->write(message)
-
 }
 //---------------------------------------------------------------
 
