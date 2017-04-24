@@ -31,11 +31,12 @@ public:
     bool isStarted;
     void setMap(QMap<QString,int>* Map);
     int rowcount;
+    QString timeId; //格式 170227112140
+
 
 private:
     QThread *thread;
     QStringList *IDLIST;
-    QString timeId; //格式 170227112140
     QString settings; //存储下位机要修改的参数设置
     QQueue<QString> orderList;
     QString Order_Get_Settings(int id);//获取当前下位机参数指令

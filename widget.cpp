@@ -11,7 +11,7 @@ Widget::Widget(QWidget *parent) :
     qDebug()<<"当前线程ID:"<<QThread::currentThreadId();
     ui->setupUi(this);
     map_point = &map;
-    isAllDeviceWorking = false;
+//    isAllDeviceWorking = false;
     viewInit();
     setDialog = new Settings;
     portThread = new QThread;
@@ -51,8 +51,8 @@ void Widget::current_index_changed(QModelIndex currentIndex)
     {
         ui->Button_import->hide();
         ui->Button_start->hide();
-//        current_modId = s.split(" ").at(1);
         ui->label->setText("当前选中："+s);
+        ui->treeView->expand(ui->treeView->currentIndex());
     }
     if(s.contains("实时数据"))
     {
@@ -81,45 +81,57 @@ void Widget::current_index_changed(QModelIndex currentIndex)
         ui->Button_start->hide();
         ui->Button_import->show();
         ui->Button_import->setEnabled(true);
-        if(get_current_item()->checkState()==0)
-        {
-            get_current_item()->setCheckState(Qt::CheckState::Checked);
-
-            portAgent->rowcount = get_current_item()->rowCount();
-            for(int i=0;i<get_current_item()->rowCount();i++)
-            {
-                QStandardItem *currentItem = get_current_item()->child(i);
-                currentItem->setCheckState(Qt::CheckState::Checked);
-                portAgent->Set_timeId(currentItem->text());
-                emit orders(ORDER_UPLOAD_HISTORY_DATA,get_device_id());
-//                portAgent->GiveOrders(ORDER_UPLOAD_HISTORY_DATA,get_device_id());
-//                QThread::msleep(10000);
-            }
-            ui->treeView->expand(ui->treeView->currentIndex());
-        }
-        else
-        {
-            get_current_item()->setCheckState(Qt::CheckState::Unchecked);
-            for(int i=0;i<get_current_item()->rowCount();i++)
-            {
-                QStandardItem *currentItem = get_current_item()->child(i);
-                currentItem->setCheckState(Qt::CheckState::Unchecked);
-            }
-        }
+        ui->treeView->expand(ui->treeView->currentIndex());
     }
 
     if(s.contains("-"))
     {
-        ui->Button_start->hide();
-        ui->Button_import->show();
-        if(get_current_item()->checkState()==0)
-        {
-            get_current_item()->setCheckState(Qt::CheckState::Checked);
-        }
-        else
-        {
-            get_current_item()->setCheckState(Qt::CheckState::Unchecked);
-            get_current_item()->parent()->setCheckState(Qt::CheckState::Unchecked);
+        if(map.value(get_device_id_toString())==1)
+            QMessageBox::warning(this,"Warning","请先停止实时数据采集！");
+        else{
+            ui->Button_start->hide();
+            ui->Button_import->show();
+            ui->tableWidget->clear();
+            initTable();
+            if(get_current_item()->checkState()==0)
+            {
+                portAgent->rowcount = get_current_item()->parent()->rowCount();
+                get_current_item()->setCheckState(Qt::CheckState::Checked);
+                for(int i=0;i<get_current_item()->parent()->rowCount();i++)
+                {
+                    QStandardItem *currentItem = get_current_item()->parent()->child(i);
+                    if(currentItem->checkState()==2){
+                        portAgent->Set_timeId(currentItem->text());
+                        emit orders(ORDER_UPLOAD_HISTORY_DATA,get_device_id());
+                    }
+                    else
+                    {
+                        portAgent->rowcount--;
+                        if(portAgent->rowcount==0)
+                            portAgent->rowcount = 1;
+                    }
+                }
+            }
+            else
+            {
+                portAgent->rowcount = get_current_item()->parent()->rowCount();
+                get_current_item()->setCheckState(Qt::CheckState::Unchecked);
+                for(int i=0;i<get_current_item()->parent()->rowCount();i++)
+                {
+                    QStandardItem *currentItem = get_current_item()->parent()->child(i);
+                    if(currentItem->checkState()==2){
+                        portAgent->Set_timeId(currentItem->text());
+                        emit orders(ORDER_UPLOAD_HISTORY_DATA,get_device_id());
+                    }
+                    else
+                    {
+                        portAgent->rowcount--;
+                        if(portAgent->rowcount==0)
+                            portAgent->rowcount = 1;
+                    }
+                }
+            }
+
         }
     }
 
@@ -139,7 +151,6 @@ void Widget::initTree(QStringList nodes)
     device->setEditable(false);
     instance_data->setEditable(false);
     history_data->setEditable(false);
-    history_data->setCheckable(true);
     for(int i = 1;i < nodes.length();i++)
     {   
         //逐条添加历史数据时间点
@@ -258,22 +269,22 @@ void Widget::on_treeView_customContextMenuRequested(const QPoint &pos)
     action_start_stop_All = new QAction;
     connect(action_port_setting,SIGNAL(triggered(bool)),this,SLOT(setting_Dialog_Show()));
     connect(action_device_setting,SIGNAL(triggered(bool)),this,SLOT(device_setting_Dialog_Show()));
-    connect(action_start_stop_All,SIGNAL(triggered(bool)),this,SLOT(start_stop_all()));
+//    connect(action_start_stop_All,SIGNAL(triggered(bool)),this,SLOT(start_stop_all()));
     if(currentItem->text() == "设备列表")
     {
         QMenu *popMenu =new QMenu(this);//定义一个右键弹出菜单
-        if(!isAllDeviceWorking)
-        {
-            action_start_stop_All->setText("全部设备开始采集");
-//            isAllDeviceWorking = true;
-        }
-        else
-        {
-            action_start_stop_All->setText("全部设备停止采集");
-//            isAllDeviceWorking = false;
-        }
+//        if(!isAllDeviceWorking)
+//        {
+//            action_start_stop_All->setText("全部设备开始采集");
+////            isAllDeviceWorking = true;
+//        }
+//        else
+//        {
+//            action_start_stop_All->setText("全部设备停止采集");
+////            isAllDeviceWorking = false;
+//        }
         popMenu->addAction(action_port_setting);//往菜单内添加QAction
-        popMenu->addAction(action_start_stop_All);
+//        popMenu->addAction(action_start_stop_All);
         popMenu->exec(QCursor::pos());//弹出右键菜单，菜单位置为光标位置
     }
 
@@ -363,36 +374,6 @@ void Widget::start_and_stop_collecting()
     }
 }
 
-void Widget::start_stop_all()
-{
-    if(!isAllDeviceWorking)
-    {
-        ui->treeView->expand(ui->treeView->currentIndex());
-        for (QMap<QString, int>::const_iterator it = map.cbegin(), end = map.cend(); it != end; ++it) {
-            map.insert(it.key(),1);
-         }
-
-       for(int i=0;i<devices->rowCount();i++)
-       {
-            QStandardItem *currentItem = devices->child(i);
-            ui->treeView->expand(ui->treeView->currentIndex().child(i,0));
-            currentItem->child(0)->setText("实时数据 ==> 正在采集");
-       }
-        isAllDeviceWorking = true;
-    }
-    else
-    {
-        for (QMap<QString, int>::const_iterator it = map.cbegin(), end = map.cend(); it != end; ++it) {
-            map.insert(it.key(),0);
-         }
-        for(int i=0;i<devices->rowCount();i++)
-        {
-             QStandardItem *currentItem = devices->child(i);
-             currentItem->child(0)->setText("实时数据");
-        }
-        isAllDeviceWorking = false;
-    }
-}
 
 QStandardItem* Widget::get_current_item()
 {
@@ -444,3 +425,36 @@ void Widget::export_to_excel()
     ToExcel *toexcel = new ToExcel;
     toexcel->Import(get_device_id_toString()+QDateTime::currentDateTime().toString("yyMMddhhmmss"),datalist);
 }
+
+/*
+void Widget::start_stop_all()
+{
+    if(!isAllDeviceWorking)
+    {
+        ui->treeView->expand(ui->treeView->currentIndex());
+        for (QMap<QString, int>::const_iterator it = map.cbegin(), end = map.cend(); it != end; ++it) {
+            map.insert(it.key(),1);
+         }
+
+       for(int i=0;i<devices->rowCount();i++)
+       {
+            QStandardItem *currentItem = devices->child(i);
+            ui->treeView->expand(ui->treeView->currentIndex().child(i,0));
+            currentItem->child(0)->setText("实时数据 ==> 正在采集");
+       }
+        isAllDeviceWorking = true;
+    }
+    else
+    {
+        for (QMap<QString, int>::const_iterator it = map.cbegin(), end = map.cend(); it != end; ++it) {
+            map.insert(it.key(),0);
+         }
+        for(int i=0;i<devices->rowCount();i++)
+        {
+             QStandardItem *currentItem = devices->child(i);
+             currentItem->child(0)->setText("实时数据");
+        }
+        isAllDeviceWorking = false;
+    }
+}
+*/

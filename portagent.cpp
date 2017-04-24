@@ -27,6 +27,7 @@ void PortAgent::Set_Settings(QString Settings)
 
 void PortAgent::Set_timeId(QString TimeId)
 {
+    QThread::msleep(1);
     this->timeId = TimeId;
 }
 
@@ -53,8 +54,12 @@ void PortAgent::GiveOrders(int order,int id)
     case ORDER_READ_INSTANCE_DATA:orderList.enqueue(Order_Read_Instance_Data(id));break;
     default:break;
     }
+    qDebug()<<"gived~";
+    qDebug()<<orderList;
+    qDebug()<<rowcount;
     if(orderList.length()==rowcount)
     {
+        qDebug()<<orderList;
         emit send();
         rowcount = 1;
     }
@@ -169,19 +174,17 @@ QString PortAgent::Order_Get_Settings(int id)
 {
     QString readDataRequest;
     CrcCheck *crc = new CrcCheck();
-    QString modId = QString::number(id,16);
-        QString zero = "0";
-    if(modId.length()<2){
-    modId = zero.append(modId);
-    }
-        readDataRequest.append(modId);
-        readDataRequest.append("03");    //功能码
-        readDataRequest.append("00");    //寄存器地址高位
-        readDataRequest.append("00");    //寄存器地址低位
-        readDataRequest.append("00");    //寄存器数目高位
-        readDataRequest.append("07");    //寄存器数目低位 (这里我分开写清楚点 内啥觉得太长就并成一句好了)
-        readDataRequest.append(crc->crcChecksix(readDataRequest));
-        return readDataRequest;
+    QString modId = modIdExpand(id);
+
+    readDataRequest.append(modId);
+    readDataRequest.append("03");    //功能码
+    readDataRequest.append("00");    //寄存器地址高位
+    readDataRequest.append("00");    //寄存器地址低位
+    readDataRequest.append("00");    //寄存器数目高位
+    readDataRequest.append("07");    //寄存器数目低位 (这里我分开写清楚点 内啥觉得太长就并成一句好了)
+    readDataRequest.append(crc->crcChecksix(readDataRequest));
+
+    return readDataRequest;
 }
 
 QString PortAgent::Order_Change_Settings(int id)
@@ -254,7 +257,8 @@ QString PortAgent::Order_Upload_History_Data(int id)//170301120000
     CrcCheck *crc = new CrcCheck();
     QString UploadRequest;
     UploadRequest.append(modIdExpand(id)).append("42"); //添加modid与功能码42
-    QStringList timeSettings = timeId.split(" ");
+    qDebug()<<timeId;
+    QStringList timeSettings = this->timeId.split(" ");
     QStringList dateSettings = timeSettings.at(0).split("-");
     QStringList clockSettings = timeSettings.at(1).split(":");
     UploadRequest.append(modIdExpand(dateSettings.at(0).toInt(&ok,10)))
