@@ -36,3 +36,6 @@ FORMS    += widget.ui \
 QT += serialport
 QT += sql
 QT += axcontainer
+
+RESOURCES += \
+    style.qrc

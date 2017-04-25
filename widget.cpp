@@ -2,6 +2,7 @@
 #include "ui_widget.h"
 #include <QList>
 #include <QTreeWidgetItem>
+#include <QTableWidgetItem>
 #include <QMenu>
 
 Widget::Widget(QWidget *parent) :
@@ -30,6 +31,21 @@ Widget::Widget(QWidget *parent) :
     connect(this,SIGNAL(itemCheckStatusChanged(QString)),this,SLOT(read_history_data(QString)));//这个用来判断树状表中节点状态变化
     connect(this,SIGNAL(orders(int,int)),portAgent,SLOT(GiveOrders(int,int)),Qt::QueuedConnection);
     connect(portAgent,SIGNAL(fillTable(QStringList)),this,SLOT(fill_table_all(QStringList)));
+
+
+}
+
+void Widget::load()
+{
+    QString qss;
+    QFile file(":/qss/ui.qss");
+    file.open(QFile::ReadOnly);
+    if (file.isOpen())
+    {
+        qss = QLatin1String(file.readAll());
+        qApp->setStyleSheet(qss);
+        file.close();
+    }
 }
 
 Widget::~Widget()
@@ -178,6 +194,7 @@ void Widget::initTable()
     ui->tableWidget->verticalHeader()->setVisible(false);
     ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     ui->tableWidget->horizontalHeader()->setSectionsMovable(true);
+    ui->tableWidget->horizontalHeader()->setHighlightSections(false);
     qDebug()<<"表格初始化成功";
 }
 
@@ -211,6 +228,7 @@ void Widget::initTree_test()
 void Widget::viewInit()
 {  
     this->setWindowTitle("声强检测仪");
+    load();
     model = new QStandardItemModel (ui->treeView);
     ui->treeView->setMaximumWidth(250);
     devices = new QStandardItem("设备列表");
@@ -224,6 +242,7 @@ void Widget::viewInit()
     model->appendRow(devices);
     ui->treeView->setModel(model);
     initTable();
+
     qDebug()<<"界面初始化完毕";
 }
 
@@ -247,11 +266,16 @@ void Widget::add_table_row(QStringList items)
     ui->tableWidget->setItem(rowCount, 0, new QTableWidgetItem(items.at(items.length()-1)));
     ui->tableWidget->setItem(rowCount, 1, new QTableWidgetItem(items.at(0)));
     ui->tableWidget->setItem(rowCount, 2, new QTableWidgetItem(items.at(1)));
-    ui->tableWidget->item(rowCount, 0)->setTextAlignment(Qt::AlignHCenter);
-    ui->tableWidget->item(rowCount, 1)->setTextAlignment(Qt::AlignHCenter);
-    ui->tableWidget->item(rowCount, 2)->setTextAlignment(Qt::AlignHCenter);
+    ui->tableWidget->item(rowCount, 0)->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+    ui->tableWidget->item(rowCount, 1)->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+    ui->tableWidget->item(rowCount, 2)->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+    ui->tableWidget->item(rowCount, 0)->setTextColor(QColor(187,187,187));
+    ui->tableWidget->item(rowCount, 1)->setTextColor(QColor(187,187,187));
+    ui->tableWidget->item(rowCount, 2)->setTextColor(QColor(187,187,187));
+
+//    ui->tableWidget->viewport()->setFocusPolicy(Qt::NoFocus);
     ui->tableWidget->setRowCount(rowCount+2);
-}
+    }
 
 void Widget::update_instance_data(QStringList s)
 {
@@ -312,7 +336,7 @@ void Widget::device_setting_changed(QString s)
 
 void Widget::setting_Dialog_Show()
 {
-    setDialog->show();   
+    setDialog->show();
 }
 
 void Widget::device_setting_Dialog_Show()
@@ -339,7 +363,6 @@ int Widget::get_device_id()
 
 QString Widget::get_device_id_toString()
 {
-
     QStandardItem *currentItem = get_current_item();
     int index = 0;
     QString s = currentItem->text();
@@ -373,7 +396,6 @@ void Widget::start_and_stop_collecting()
 
     }
 }
-
 
 QStandardItem* Widget::get_current_item()
 {

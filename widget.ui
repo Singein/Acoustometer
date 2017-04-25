@@ -30,6 +30,9 @@
        <property name="styleSheet">
         <string notr="true"/>
        </property>
+       <property name="lineWidth">
+        <number>0</number>
+       </property>
        <property name="headerHidden">
         <bool>true</bool>
        </property>
