@@ -54,9 +54,7 @@ void PortAgent::GiveOrders(int order,int id)
     case ORDER_READ_INSTANCE_DATA:orderList.enqueue(Order_Read_Instance_Data(id));break;
     default:break;
     }
-    qDebug()<<"gived~";
-    qDebug()<<orderList;
-    qDebug()<<rowcount;
+
     if(orderList.length()==rowcount)
     {
         qDebug()<<orderList;
@@ -122,8 +120,10 @@ void PortAgent::OrderExcuted()
         switch(Flag)
         {
             case 2: Data_ID(data);
-            case 3: if(len>9) Data_Settings(data);
-                    Data_Instance(data);break;
+            case 3: if(len>9)
+                        Data_Settings(data);
+                    else
+                        Data_Instance(data);break;
             case 65:Data_TimePoint(data);break;
             case 66: Data_History(data);break;
 
@@ -156,6 +156,7 @@ QString PortAgent::expand(QString unexpand){
     case 1:expandString = triZero.append(unexpand);break;
     case 2:expandString = douZero.append(unexpand);break;
     case 3:expandString = zero.append(unexpand);break;
+    case 4:return unexpand;
     default:
         break;
     }
@@ -181,9 +182,9 @@ QString PortAgent::Order_Get_Settings(int id)
     readDataRequest.append("00");    //寄存器地址高位
     readDataRequest.append("00");    //寄存器地址低位
     readDataRequest.append("00");    //寄存器数目高位
-    readDataRequest.append("07");    //寄存器数目低位 (这里我分开写清楚点 内啥觉得太长就并成一句好了)
-    readDataRequest.append(crc->crcChecksix(readDataRequest));
-
+    readDataRequest.append("06");    //寄存器数目低位 (这里我分开写清楚点 内啥觉得太长就并成一句好了)
+    readDataRequest.append(expand(crc->crcChecksix(readDataRequest)));
+    qDebug()<<"test:"<<readDataRequest<<" crc:"<<expand(crc->crcChecksix(readDataRequest));
     return readDataRequest;
 }
 
@@ -196,6 +197,7 @@ QString PortAgent::Order_Change_Settings(int id)
     QStringList timeSetting = setting[6].split(" ");
     QStringList dateTime = timeSetting[0].split("-");
     QStringList clockTime = timeSetting[1].split(":");
+    QString rangeMax = QString::number((int)(setting[1].toDouble()*100),16).toUpper();
     bool ok;
     for(int it = 0;it<6;++it){
         setting[it] = QString::number(setting[it].toInt(&ok,10),16).toUpper();
@@ -213,10 +215,10 @@ QString PortAgent::Order_Change_Settings(int id)
     changeDataRequest.append(modId);
     changeDataRequest.append("10"); //功能码
     changeDataRequest.append("0000");  //寄存器地址
-    changeDataRequest.append("0014");  //寄存器数目
-    changeDataRequest.append("28");  //字节数
+    changeDataRequest.append("000E");  //寄存器数目
+    changeDataRequest.append("1C");  //字节数
     changeDataRequest.append(setting[0]);  //寄存器[0]位k值
-    changeDataRequest.append(setting[1]);   //量程最大值
+    changeDataRequest.append(expand(rangeMax));   //量程最大值
     changeDataRequest.append(setting[2]);  //档位
     changeDataRequest.append(setting[3]);  //频率关联状态
     changeDataRequest.append(setting[4]); //存储时间间隔
@@ -231,7 +233,6 @@ QString PortAgent::Order_Change_Settings(int id)
     changeDataRequest.append(clockTime[1]);
     changeDataRequest.append(clockTime[2]);
     changeDataRequest.append(crc->crcChecksix(changeDataRequest));
-    qDebug()<<changeDataRequest;
     return changeDataRequest;
 }
 
@@ -416,9 +417,11 @@ QStringList PortAgent::Raw_Data_Settings(QByteArray* rec)
     int connectFrqcyOnOff = (noCRCdata.mid(7,2).toHex().toInt(&ok,16));
     int SaveGearsValue = (noCRCdata.mid(9,2).toHex().toInt(&ok,16));
     int saveTimeInterval = (noCRCdata.mid(11,2).toHex().toInt(&ok,16));
+    int autoCloseTime = (noCRCdata.mid(13,2).toHex().toInt(&ok,16));
         //QString s = QString::number(year,10);
         //emit operationFinished(QByteArray::number(vol), QByteArray::number(fre));
-    settings<<QString::number(kValue)<<QString::number(rangeMax)<<QString::number(connectFrqcyOnOff)<<QString::number(SaveGearsValue)<<QString::number(saveTimeInterval);
+    settings<<QString::number(kValue)<<QString::number(rangeMax)<<QString::number(connectFrqcyOnOff)<<QString::number(SaveGearsValue)<<QString::number(saveTimeInterval)<<QString::number(autoCloseTime);
+    qDebug()<<settings;
     return settings;
 }
 
@@ -435,6 +438,7 @@ void PortAgent::Data_Instance(QByteArray data)
 {
     QStringList dataList;
     dataList = Raw_Data_Instance(&data);
+    DB->createDataTable(dataList.at(2)+"_instance");
     if(true)  //判断实时数据的采集开关状态
     {
         QDateTime time = QDateTime::currentDateTime();//为了保证写入数据库的和界面实时更新的时间一致
