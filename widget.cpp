@@ -102,6 +102,23 @@ void Widget::current_index_changed(QModelIndex currentIndex)
         ui->Button_import->show();
         ui->Button_import->setEnabled(true);
         ui->treeView->expand(ui->treeView->currentIndex());
+        ui->tableWidget->clear();
+        initTable();
+        portAgent->rowcount = get_current_item()->rowCount();
+        for(int i=0;i<get_current_item()->rowCount();i++)
+        {
+            QStandardItem *currentItem = get_current_item()->child(i);
+            if(currentItem->checkState()==2){
+                portAgent->Set_timeId(currentItem->text());
+                emit orders(ORDER_UPLOAD_HISTORY_DATA,get_device_id());
+            }
+            else
+            {
+                portAgent->rowcount--;
+                if(portAgent->rowcount==0)
+                    portAgent->rowcount = 1;
+            }
+        }
     }
 
     if(s.contains("-"))
@@ -164,6 +181,9 @@ void Widget::current_index_changed(QModelIndex currentIndex)
 
 void Widget::initTree(QStringList nodes)
 {   
+//    model->clear();
+//    model->appendRow(devices);
+//    ui->treeView->setModel(model);
     QStandardItem *device = new QStandardItem("测量仪 "+nodes.at(0)); //这条是id，设备
     map.insert(nodes.at(0),0);
     QStandardItem *instance_data = new QStandardItem("实时数据");//这条是实时数据
@@ -190,7 +210,6 @@ void Widget::initTree(QStringList nodes)
 void Widget::initTable()
 {
     ui->tableWidget->setColumnCount(3);
-    ui->tableWidget->setRowCount(1);
     QStringList tableHeader;
     tableHeader <<"日期/时间"<<"声强值(W/CM2)"<<"频率(KHz)";
     ui->tableWidget->setHorizontalHeaderLabels(tableHeader);
@@ -199,6 +218,7 @@ void Widget::initTable()
     ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     ui->tableWidget->horizontalHeader()->setSectionsMovable(true);
     ui->tableWidget->horizontalHeader()->setHighlightSections(false);
+    RowCount = 1;
     qDebug()<<"表格初始化成功";
 }
 
@@ -246,13 +266,11 @@ void Widget::viewInit()
     model->appendRow(devices);
     ui->treeView->setModel(model);
     initTable();
-
     qDebug()<<"界面初始化完毕";
 }
 
 void Widget::fill_table_all(QStringList s)
 {
-    int rowCount = ui->tableWidget->rowCount();
     for(int i = 2;i<s.length();i++)
     {
         QStringList items;
@@ -278,7 +296,9 @@ void Widget::read_csv(QStringList s)
 
 void Widget::add_table_row(QStringList items)
 {
+    ui->tableWidget->setRowCount(RowCount);
     int rowCount = ui->tableWidget->rowCount()-1;
+
     ui->tableWidget->setItem(rowCount, 0, new QTableWidgetItem(items.at(items.length()-1)));
     ui->tableWidget->setItem(rowCount, 1, new QTableWidgetItem(items.at(0)));
     ui->tableWidget->setItem(rowCount, 2, new QTableWidgetItem(items.at(1)));
@@ -290,8 +310,10 @@ void Widget::add_table_row(QStringList items)
     ui->tableWidget->item(rowCount, 2)->setTextColor(QColor(187,187,187));
 
 //    ui->tableWidget->viewport()->setFocusPolicy(Qt::NoFocus);
+    RowCount ++;
     ui->tableWidget->setRowCount(rowCount+2);
-    }
+
+}
 
 void Widget::update_instance_data(QStringList s)
 {

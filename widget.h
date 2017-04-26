@@ -60,6 +60,7 @@ private:
      QString get_device_id_toString();//同上，区别是返回qstring
      bool isInstance; //判断当前选中是否是在实时数据
      void load();
+     int RowCount;
 
 
 signals:
