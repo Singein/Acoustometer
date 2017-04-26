@@ -23,7 +23,8 @@ namespace Ui {
 class Widget;
 }
 
-
+class PortAgent;
+class DeviceParameter;
 
 class Widget : public QWidget
 {
@@ -64,6 +65,7 @@ private:
 signals:
      void itemCheckStatusChanged(QString s); //当历史数据时间组选中状态改变的时候
      void orders(int order,int id);
+     void getInstanceBuff(QString id);
 
 private slots:
      void initTree_test();
@@ -81,6 +83,7 @@ private slots:
      void read_history_data(QString s);//读取历史数据
      void update_instance_data(QStringList s);//更新实时数据
      void export_to_excel();
+     void read_csv(QStringList s);
 
 };
 

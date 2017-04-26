@@ -17,17 +17,19 @@ SOURCES += main.cpp\
     portagent.cpp \
     settings.cpp \
     deviceparameter.cpp \
-    database.cpp \
     toexcel.cpp \
-    crccheck.cpp
+    crccheck.cpp \
+    csv.cpp \
+    datasaver.cpp
 
 HEADERS  += widget.h \
     portagent.h \
     settings.h \
     deviceparameter.h \
-    database.h \
     toexcel.h \
-    crccheck.h
+    crccheck.h \
+    csv.h \
+    datasaver.h
 
 FORMS    += widget.ui \
     settings.ui \

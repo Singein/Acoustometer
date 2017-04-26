@@ -9,7 +9,7 @@ namespace Ui {
 class DeviceParameter;
 }
 
-
+class PortAgent;
 
 class DeviceParameter : public QWidget
 {

@@ -31,6 +31,8 @@ Widget::Widget(QWidget *parent) :
     connect(this,SIGNAL(itemCheckStatusChanged(QString)),this,SLOT(read_history_data(QString)));//这个用来判断树状表中节点状态变化
     connect(this,SIGNAL(orders(int,int)),portAgent,SLOT(GiveOrders(int,int)),Qt::QueuedConnection);
     connect(portAgent,SIGNAL(fillTable(QStringList)),this,SLOT(fill_table_all(QStringList)));
+    connect(this,SIGNAL(getInstanceBuff(QString)),portAgent->DS,SLOT(readCsv(QString)));
+    connect(portAgent->DS,SIGNAL(readyRead(QStringList)),this,SLOT(read_csv(QStringList)));
 
 
 }
@@ -74,8 +76,10 @@ void Widget::current_index_changed(QModelIndex currentIndex)
     {
         ui->Button_import->show();
         ui->Button_start->show();
-        if(portAgent->DB->isTableExist(QString::number(get_device_id())+"_instance"))
-            fill_table_all(portAgent->DB->queryDataTableAll(QString::number(get_device_id())+"_instance"));
+        initTable();
+        emit getInstanceBuff(get_device_id_toString());
+
+
         isInstance = true;
         if(s.contains("正在采集"))
         {
@@ -249,7 +253,6 @@ void Widget::viewInit()
 void Widget::fill_table_all(QStringList s)
 {
     int rowCount = ui->tableWidget->rowCount();
-    qDebug()<<rowCount;
     for(int i = 2;i<s.length();i++)
     {
         QStringList items;
@@ -258,6 +261,19 @@ void Widget::fill_table_all(QStringList s)
         items<<s.at(i).split(" ").at(2)+" "+s.at(i).split(" ").at(3);
         add_table_row(items);
     }
+}
+
+void Widget::read_csv(QStringList s)
+{
+    if(!s.isEmpty())
+        for(int i=0;i<s.length()-1;i++)
+        {
+            QStringList items;
+            items<<s.at(i).split(",").at(1);
+            items<<s.at(i).split(",").at(2);
+            items<<s.at(i).split(",").at(0);
+            add_table_row(items);
+        }
 }
 
 void Widget::add_table_row(QStringList items)
@@ -447,6 +463,9 @@ void Widget::export_to_excel()
     ToExcel *toexcel = new ToExcel;
     toexcel->Import(get_device_id_toString()+QDateTime::currentDateTime().toString("yyMMddhhmmss"),datalist);
 }
+
+
+
 
 /*
 void Widget::start_stop_all()

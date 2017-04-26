@@ -12,9 +12,11 @@
 #include <QByteArray>
 #include <QSerialPort>
 #include <QThread>
-#include <database.h>
+#include <datasaver.h>
 #include <QMap>
 #include <QQueue>
+
+class DataSaver;
 
 class PortAgent:public QObject
 {
@@ -23,7 +25,8 @@ public:
     PortAgent();
     ~PortAgent();
     QSerialPort *port;
-    Database *DB;
+//    Database *DB;
+    DataSaver *DS;
     QMap<QString,int>* map;
     void Set_Settings(QString Settings);//设置下位机即将要应用的参数
     void Set_timeId(QString TimeId);//设置下位机要获取的历史数据时间点
@@ -75,6 +78,7 @@ signals:
     addTreeNode(QStringList s);
     fillTable(QStringList s);
     readInstanceData(QStringList data);
+    writeCsv(QStringList s,QString id);
     deviceParameter(QStringList settings);
     fakeTimer(int order,int id);
     send();

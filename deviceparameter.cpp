@@ -9,6 +9,7 @@ DeviceParameter::DeviceParameter(QWidget *parent) :
     this->setWindowTitle("仪器参数设置");
     this->setMaximumSize(635,335);
     this->setMinimumSize(635,335);
+    ui->spinBox_K->setRange(0,100);
     ui->label_ID->setText(QString::number(device_ID));
     setWindowModality(Qt::ApplicationModal);
     connect(ui->buttonApplay,SIGNAL(clicked()),this,SLOT(buttonApply_clicked()));
@@ -63,19 +64,31 @@ void DeviceParameter::sentAgent(PortAgent *agent)
     connect(Agent,SIGNAL(deviceParameter(QStringList)),this,SLOT(initView(QStringList)));
 }
 
-
-//目前这里缺点东西。。。等惠中改。。。------------------------------------------------------------------------
-
 void DeviceParameter::initView(QStringList Settings)
 {
-//    settings<<QString::number(kValue,10)<<QString::number(shift,10)
-//    <<QString::number(autoCloseTime,10)<<QString::number(connectFrqcyOnOff,10)
-//                                      <<QString::number(saveTimeInterval,10)<<QString::number(rangeMax,10);
     ui->spinBox_K->setValue(Settings.at(0).toInt());
     ui->doubleSpinBox_H->setValue(Settings.at(1).toDouble());
-//    ui->comboBox_G->setCurrentIndex(Settings.at(2).);
+    ui->comboBox_G->setCurrentIndex(Settings.at(2).toInt());
+    if(Settings.at(3)=="0")
+        ui->checkBox_F->setChecked(false);
+    else
+        ui->checkBox_F->setChecked(true);
 
+    if(Settings.at(4)=="0")
+        ui->checkBox_T->setChecked(false);
+    else
+    {
+        ui->checkBox_T->setChecked(true);
+        ui->spinBox_T->setValue(Settings.at(4).toInt());
+    }
 
+    if(Settings.at(5)=="0")
+        ui->checkBox_OFF->setChecked(false);
+    else
+    {
+        ui->spinBox_OFF->setValue(Settings.at(5).toInt());
+        ui->checkBox_OFF->setChecked(true);
+    }
 }
 
 //还有一件事-----------------设置关闭窗口的ignore处理

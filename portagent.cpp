@@ -5,7 +5,8 @@
 
 PortAgent::PortAgent()
 {
-    DB = new Database;
+//    DB = new Database;
+    DS = new DataSaver;
     rowcount = 1;
     thread = new QThread;
     this->moveToThread(thread);
@@ -18,6 +19,8 @@ void PortAgent::setPort(QSerialPort *p)
     connect(port,SIGNAL(readyRead()),this,SLOT(OrderExcuted()));
     connect(this,SIGNAL(fakeTimer(int,int)),this,SLOT(fakeTimerSlot(int,int)));
     connect(this,SIGNAL(send()),this,SLOT(SendOrders()));
+    connect(this,SIGNAL(writeCsv(QStringList,QString)),DS,SLOT(writeCsv(QStringList,QString)));
+
 }
 
 void PortAgent::Set_Settings(QString Settings)
@@ -133,6 +136,7 @@ void PortAgent::OrderExcuted()
     emit send();
 }
 
+//TODO:实时数据采集的时间间隔
 void PortAgent::fakeTimerSlot(int order,int id)
 {
     for (QMap<QString, int>::const_iterator it = map->cbegin(), end = map->cend(); it != end; ++it) {
@@ -176,7 +180,6 @@ QString PortAgent::Order_Get_Settings(int id)
     QString readDataRequest;
     CrcCheck *crc = new CrcCheck();
     QString modId = modIdExpand(id);
-
     readDataRequest.append(modId);
     readDataRequest.append("03");    //功能码
     readDataRequest.append("00");    //寄存器地址高位
@@ -310,9 +313,6 @@ QStringList PortAgent::Raw_Data_Instance(QByteArray* rec)
     bool ok;
     double vol = (double)((noCRCdata.mid(3,2).toHex().toInt(&ok,16)))/100;
     double fre = (double)(noCRCdata.mid(5,2).toHex().toInt(&ok,16))/100;
-//    QString date = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm::ss");
-        //QString s = QString::number(year,10);
-        //emit operationFinished(QByteArray::number(vol), QByteArray::number(fre));
     instanceData<<QString::number(vol)<<QString::number(fre)<<QString::number(modid);
     qDebug()<<instanceData;
     return instanceData;
@@ -324,7 +324,6 @@ QStringList PortAgent::Raw_Data_TimePoint(QByteArray* rec)
     QStringList timeTable;
     bool ok;
     int modid = noCRCData.mid(0,1).toHex().toInt(&ok,16);
-//    qDebug()<<(rec->length()-4)/7;
     int len = (rec->length()-4)/7;
     QString timeData;
     timeTable.append(QString::number(modid));
@@ -339,8 +338,6 @@ QStringList PortAgent::Raw_Data_TimePoint(QByteArray* rec)
                 .arg(QString::number(noCRCData.mid(8+7*i,1).toHex().toInt(&ok,16),10));
         timeTable.append(timeData);
     }
-    DB->createDataTable(QString::number(modid,10)+"_history");
-    DB->createDataTable(QString::number(modid,10)+"_instance");
     qDebug()<<timeTable;
     return timeTable;
 }
@@ -409,7 +406,7 @@ QStringList PortAgent::Raw_Data_Settings(QByteArray* rec)
     QStringList settings;
     int modid = (noCRCdata.mid(0,1).toHex().toInt(&ok,16));
     int fun = noCRCdata.mid(1,1).toHex().toInt(&ok,16);
-    bool ok;
+//    bool ok;
     int num = (noCRCdata.mid(2,1).toHex().toInt(&ok,16));
 //    for(int i = 0;i < num;i++){settings<<QString::number(noCRCdata.mid(3+2*i,2).toInt(&ok,16));}
     int kValue = (noCRCdata.mid(3,2).toHex().toInt(&ok,16));
@@ -418,9 +415,9 @@ QStringList PortAgent::Raw_Data_Settings(QByteArray* rec)
     int SaveGearsValue = (noCRCdata.mid(9,2).toHex().toInt(&ok,16));
     int saveTimeInterval = (noCRCdata.mid(11,2).toHex().toInt(&ok,16));
     int autoCloseTime = (noCRCdata.mid(13,2).toHex().toInt(&ok,16));
-        //QString s = QString::number(year,10);
-        //emit operationFinished(QByteArray::number(vol), QByteArray::number(fre));
-    settings<<QString::number(kValue)<<QString::number(rangeMax)<<QString::number(connectFrqcyOnOff)<<QString::number(SaveGearsValue)<<QString::number(saveTimeInterval)<<QString::number(autoCloseTime);
+    settings<<QString::number(kValue)<<QString::number(rangeMax)
+           <<QString::number(connectFrqcyOnOff)<<QString::number(SaveGearsValue)
+          <<QString::number(saveTimeInterval)<<QString::number(autoCloseTime);
     qDebug()<<settings;
     return settings;
 }
@@ -428,7 +425,6 @@ QStringList PortAgent::Raw_Data_Settings(QByteArray* rec)
 QStringList* PortAgent::Raw_Data_ID(QByteArray *rec)
 {
     QString id = QString::number(rec->mid(2,1).toHex().toInt(&ok,16));
-//    IDLIST;
     return IDLIST;
 }
 //----------------------------------------------------------------
@@ -438,14 +434,15 @@ void PortAgent::Data_Instance(QByteArray data)
 {
     QStringList dataList;
     dataList = Raw_Data_Instance(&data);
-    DB->createDataTable(dataList.at(2)+"_instance");
     if(true)  //判断实时数据的采集开关状态
     {
         QDateTime time = QDateTime::currentDateTime();//为了保证写入数据库的和界面实时更新的时间一致
         dataList<<time.toString("yyyy-MM-dd hh:mm:ss");
+        QStringList s;
+        s<<time.toString("yyyy-MM-dd hh:mm:ss")<<dataList.at(0)<<dataList.at(1);
         emit readInstanceData(dataList);//把存入数据库的时间同时发给主界面
-        emit fakeTimer(ORDER_READ_INSTANCE_DATA,dataList.at(0).toInt());
-        DB->insertInstanceDataTable(dataList.at(2)+"_instance",time,dataList.at(0),dataList.at(1));
+        emit fakeTimer(ORDER_READ_INSTANCE_DATA,dataList.at(2).toInt());
+        emit writeCsv(s,dataList.at(2));
     }
 }
 
@@ -455,16 +452,12 @@ void PortAgent::Data_History(QByteArray data)
     emit fillTable(DataList);
     for(int i = 2;i<DataList.at(1).toInt();i++){
         QStringList list = DataList.at(i).split(" ");
-        DB->insertHistoryDataTable(DataList.at(0)+"_history",list.at(0)+list.at(1),list.at(2),list.at(3));
     }
-        //DB->insertHistoryDataTable();
 }
 
 void PortAgent::Data_TimePoint(QByteArray data)
 {
-//    DB->insertTimeGroupTable(Raw_Data_TimePoint(&data));
     emit addTreeNode(Raw_Data_TimePoint(&data));
-
 }
 
 void PortAgent::Data_Settings(QByteArray data)
