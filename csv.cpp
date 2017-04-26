@@ -5,9 +5,9 @@ Csv::Csv()
     file = new QFile;
 }
 
-bool Csv::isFileExit(QString id)
+bool Csv::isFileExit(QString fileName)
 {
-    file->setFileName(QDir::currentPath()+"//"+id+"_instance.csv");
+    file->setFileName(QDir::currentPath()+"//"+fileName+".csv");
     return file->open(QIODevice::ReadOnly);
 }
 

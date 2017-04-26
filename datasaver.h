@@ -17,7 +17,7 @@ public:
 private:
     QThread *thread;
     Csv *csv;
-    ToExcel *excel;
+    Excel *excel;
 
 signals:
     void readyRead(QStringList s);
@@ -25,7 +25,7 @@ signals:
 public slots:
     void writeCsv(QStringList s,QString id);
     void readCsv(QString id);
-    void exportExcel(QStringList s);
+    void exportExcel(QStringList s,QString filename);
 };
 
 #endif // DATASAVER_H

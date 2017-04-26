@@ -3,23 +3,23 @@
 
 #include <QWidget>
 #include <QDir>
-#include <QAxObject>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <csv.h>
 
 namespace Ui {
 class ToExcel;
 }
 
-class ToExcel : public QWidget
+class Excel : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit ToExcel(QWidget *parent = 0);
-    ~ToExcel();
-    void Import(QString filename,QStringList data);
-
+    explicit Excel(QWidget *parent = 0);
+    ~Excel();
+    void Export(QString filename,QStringList data);
+    void setCsv(Csv *csv);
 
 signals:
     void current_progress(double progress);
@@ -27,6 +27,7 @@ signals:
 
 private:
     Ui::ToExcel *ui;
+    Csv *csv;
 
 private slots:
     void set_progressBar_value(double i);

@@ -67,6 +67,7 @@ signals:
      void itemCheckStatusChanged(QString s); //当历史数据时间组选中状态改变的时候
      void orders(int order,int id);
      void getInstanceBuff(QString id);
+     void saveAsCsv(QStringList s,QString id);
 
 private slots:
      void initTree_test();

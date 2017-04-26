@@ -33,6 +33,7 @@ Widget::Widget(QWidget *parent) :
     connect(portAgent,SIGNAL(fillTable(QStringList)),this,SLOT(fill_table_all(QStringList)));
     connect(this,SIGNAL(getInstanceBuff(QString)),portAgent->DS,SLOT(readCsv(QString)));
     connect(portAgent->DS,SIGNAL(readyRead(QStringList)),this,SLOT(read_csv(QStringList)));
+    connect(this,SIGNAL(saveAsCsv(QStringList,QString)),portAgent->DS,SLOT(exportExcel(QStringList,QString)));
 
 
 }
@@ -76,6 +77,7 @@ void Widget::current_index_changed(QModelIndex currentIndex)
     {
         ui->Button_import->show();
         ui->Button_start->show();
+        ui->tableWidget->clear();
         initTable();
         emit getInstanceBuff(get_device_id_toString());
 
@@ -181,9 +183,6 @@ void Widget::current_index_changed(QModelIndex currentIndex)
 
 void Widget::initTree(QStringList nodes)
 {   
-//    model->clear();
-//    model->appendRow(devices);
-//    ui->treeView->setModel(model);
     QStandardItem *device = new QStandardItem("测量仪 "+nodes.at(0)); //这条是id，设备
     map.insert(nodes.at(0),0);
     QStandardItem *instance_data = new QStandardItem("实时数据");//这条是实时数据
@@ -464,26 +463,21 @@ void Widget::read_history_data(QString s)
 
 void Widget::export_to_excel()
 {
-    qDebug()<<"import_to_excel called！";
-    qDebug()<<ui->tableWidget->rowCount();
     QStringList datalist;
-
-
     for(int i=0;i<ui->tableWidget->rowCount()-1;i++)
     {
         QString s="";
         for(int j=0;j<3;j++)
         {
-//            if(j==2)
-//                s += ui->tableWidget->item(i,j)->text();
-//            else
+            if(j==2)
+                s += ui->tableWidget->item(i,j)->text();
+            else
                 s += (ui->tableWidget->item(i,j)->text()+",");
         }
         datalist.append(s);
     }
-    qDebug()<<datalist.at(0);
-    ToExcel *toexcel = new ToExcel;
-    toexcel->Import(get_device_id_toString()+QDateTime::currentDateTime().toString("yyMMddhhmmss"),datalist);
+    qDebug()<<datalist.at(0);  
+    emit saveAsCsv(datalist,get_device_id_toString()+QDateTime::currentDateTime().toString("yyMMddhhmmss"));
 }
 
 

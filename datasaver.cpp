@@ -2,16 +2,16 @@
 #include "QDebug"
 DataSaver::DataSaver()
 {
+    csv = new Csv;
+    excel = new Excel;
     thread = new QThread;
     this->moveToThread(thread);
     thread->start();
-    csv = new Csv;
-    excel = new ToExcel;
+    excel->setCsv(csv);
 }
 
 void DataSaver::writeCsv(QStringList s, QString id)
 {
-    qDebug()<<"ds called!";
     csv->addRow(s,id);
 }
 
@@ -21,7 +21,7 @@ void DataSaver::readCsv(QString id)
     emit readyRead(this->buff);
 }
 
-void DataSaver::exportExcel(QStringList s)
+void DataSaver::exportExcel(QStringList s,QString fileName)
 {
-
+    excel->Export(fileName,s);
 }
