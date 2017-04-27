@@ -5,8 +5,8 @@
 #include <QDir>
 #include <QIODevice>
 #include <QTextStream>
+#include <QDir>
 
-#define PATH "/instance_buff"
 
 class Csv
 {
@@ -18,6 +18,7 @@ public:
 private:
     QFile *file;
     bool isFileExit(QString id);
+    QDir *dir;
 
 };
 

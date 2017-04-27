@@ -111,6 +111,10 @@ void Widget::current_index_changed(QModelIndex currentIndex)
         {
             QStandardItem *currentItem = get_current_item()->child(i);
             if(currentItem->checkState()==2){
+                if(map.value(get_device_id_toString())==1){
+                    QMessageBox::warning(this,"Warning","请先停止实时数据采集！");
+                    return;
+                }
                 portAgent->Set_timeId(currentItem->text());
                 emit orders(ORDER_UPLOAD_HISTORY_DATA,get_device_id());
             }

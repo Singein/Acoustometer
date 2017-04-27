@@ -3,11 +3,15 @@
 Csv::Csv()
 {
     file = new QFile;
+    dir = new QDir(QDir::currentPath()+"//instance");
+    if(dir->exists())
+        dir->removeRecursively();
+    dir->mkdir(QDir::currentPath()+"//instance");
 }
 
 bool Csv::isFileExit(QString fileName)
 {
-    file->setFileName(QDir::currentPath()+"//"+fileName+".csv");
+    file->setFileName(QDir::currentPath()+"//instance//"+fileName+".csv");
     return file->open(QIODevice::ReadOnly);
 }
 
