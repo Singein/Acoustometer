@@ -2,6 +2,7 @@
 #include "QDebug"
 #include "crccheck.h"
 #include "QMap"
+#include <QString>
 
 PortAgent::PortAgent()
 {
@@ -202,9 +203,19 @@ QString PortAgent::Order_Change_Settings(int id)
     QStringList clockTime = timeSetting[1].split(":");
     QString rangeMax = QString::number((int)(setting[1].toDouble()*100),16).toUpper();
     bool ok;
-    for(int it = 0;it<6;++it){
+    for(int it = 0;it<4;++it){
         setting[it] = QString::number(setting[it].toInt(&ok,10),16).toUpper();
         setting[it] = expand(setting[it]);
+    }
+    for(int it = 4;it<6;it++){
+        if(setting.at(it).length()>1){
+            setting[it] = QString::number(setting[it].split("#").at(1).toInt(&ok,10),16).toUpper();
+            setting[it] = expand(setting[it]);
+        }
+        else{
+            setting[it] = QString::number(setting[it].toInt(&ok,10),16).toUpper();
+            setting[it] = expand(setting[it]);
+        }
     }
     for(int it = 0;it<dateTime.length();it++){
         dateTime[it] = QString::number(dateTime[it].toInt(&ok,10),16).toUpper();
