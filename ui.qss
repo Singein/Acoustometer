@@ -156,3 +156,8 @@ QCheckBox {
     background:#2B2B2B;
     color:#BBBBBB;
 }
+
+QProgressBar {
+    backgroud:#2B2B2B;
+    color:#888888;
+}

@@ -10,6 +10,7 @@
 
 #include <QWidget>
 #include <QStandardItemModel>
+#include <QFileDialog>
 #include <QtSerialPort\QtSerialPort>
 #include <QtSerialPort\QSerialPortInfo>
 #include <QAction>
@@ -17,7 +18,7 @@
 #include <settings.h>
 #include <deviceparameter.h>
 #include <QMap>
-#include <toexcel.h>
+
 
 namespace Ui {
 class Widget;
@@ -70,7 +71,6 @@ signals:
      void saveAsCsv(QStringList s,QString id);
 
 private slots:
-     void initTree_test();
      void initTree(QStringList nodes);//初始化树状列表
      void fill_table_all(QStringList s);//一整张表填充
      void on_treeView_customContextMenuRequested(const QPoint &pos);//右键菜单
@@ -86,6 +86,7 @@ private slots:
      void update_instance_data(QStringList s);//更新实时数据
      void export_to_excel();
      void read_csv(QStringList s);
+     void set_progressBar_value(double i);
 
 };
 

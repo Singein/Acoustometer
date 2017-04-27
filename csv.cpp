@@ -11,7 +11,7 @@ Csv::Csv()
 
 bool Csv::isFileExit(QString fileName)
 {
-    file->setFileName(QDir::currentPath()+"//instance//"+fileName+".csv");
+    file->setFileName(fileName);
     return file->open(QIODevice::ReadOnly);
 }
 

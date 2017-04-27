@@ -442,7 +442,7 @@ void PortAgent::Data_Instance(QByteArray data)
         s<<time.toString("yyyy-MM-dd hh:mm:ss")<<dataList.at(0)<<dataList.at(1);
         emit readInstanceData(dataList);//把存入数据库的时间同时发给主界面
         emit fakeTimer(ORDER_READ_INSTANCE_DATA,dataList.at(2).toInt());
-        emit writeCsv(s,dataList.at(2));
+        emit writeCsv(s,QDir::currentPath()+"//instance//"+dataList.at(2)+".csv");
     }
 }
 

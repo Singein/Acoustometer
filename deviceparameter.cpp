@@ -68,7 +68,7 @@ void DeviceParameter::initView(QStringList Settings)
 {
     ui->spinBox_K->setValue(Settings.at(0).toInt());
     ui->doubleSpinBox_H->setValue(Settings.at(1).toDouble());
-    ui->comboBox_G->setCurrentIndex(Settings.at(2).toInt());
+    ui->comboBox_G->setCurrentIndex(Settings.at(2).toInt()-1);
     if(Settings.at(3)=="0")
         ui->checkBox_F->setChecked(false);
     else

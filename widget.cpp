@@ -34,7 +34,7 @@ Widget::Widget(QWidget *parent) :
     connect(this,SIGNAL(getInstanceBuff(QString)),portAgent->DS,SLOT(readCsv(QString)));
     connect(portAgent->DS,SIGNAL(readyRead(QStringList)),this,SLOT(read_csv(QStringList)));
     connect(this,SIGNAL(saveAsCsv(QStringList,QString)),portAgent->DS,SLOT(exportExcel(QStringList,QString)));
-
+    connect(portAgent->DS->excel,SIGNAL(current_progress(double)),this,SLOT(set_progressBar_value(double)));
 
 }
 
@@ -79,7 +79,7 @@ void Widget::current_index_changed(QModelIndex currentIndex)
         ui->Button_start->show();
         ui->tableWidget->clear();
         initTable();
-        emit getInstanceBuff(get_device_id_toString());
+        emit getInstanceBuff(QDir::currentPath()+"//instance//"+get_device_id_toString()+".csv");
 
 
         isInstance = true;
@@ -225,36 +225,12 @@ void Widget::initTable()
     qDebug()<<"表格初始化成功";
 }
 
-void Widget::initTree_test()
-{
-    //---------以下仅做测试-----------------
-    for(int i=1;i<247;i++)
-    {
-        map.insert(QString::number(i),0);
-        QStandardItem *device = new QStandardItem("测量仪 "+QString::number(i));
-        QStandardItem *instance_data = new QStandardItem("实时数据");
-        QStandardItem *history_data = new QStandardItem("历史数据");
-        QStandardItem *item1 = new QStandardItem("2016-12-17 12:11");
-        QStandardItem *item2 = new QStandardItem("2016-12-17 13:00");
-        QStandardItem *item3 = new QStandardItem("2016-12-17 13:11");
-        item1->setCheckable(true);
-        item2->setCheckable(true);
-        item3->setCheckable(true);
-//        history_data->setCheckable(true);
-        history_data->appendRow(item1);
-        history_data->appendRow(item2);
-        history_data->appendRow(item3);
-        device->appendRow(instance_data);
-        device->appendRow(history_data);
-        devices->appendRow(device);
-    }
-    qDebug()<<"测试子结点生成";
-    //-----------------------------------------
-}
-
 void Widget::viewInit()
 {  
     this->setWindowTitle("声强检测仪");
+    ui->progressBar->hide();
+    ui->progressBar->setRange(0,100);
+    ui->progressBar->setValue(0);
     load();
     model = new QStandardItemModel (ui->treeView);
     ui->treeView->setMaximumWidth(250);
@@ -481,8 +457,53 @@ void Widget::export_to_excel()
         datalist.append(s);
     }
     qDebug()<<datalist.at(0);  
-    emit saveAsCsv(datalist,get_device_id_toString()+QDateTime::currentDateTime().toString("yyMMddhhmmss"));
+    QString fileName = QFileDialog::getSaveFileName(this,"选择保存的路径",get_device_id_toString()+QDateTime::currentDateTime().toString("yyMMddhhmmss"),"Microsoft Office (*.csv)");//获取保存路径
+    emit saveAsCsv(datalist,fileName);
 }
+
+void Widget::set_progressBar_value(double i)
+{
+    if((int)(i*100)<100)
+    {
+        ui->progressBar->show();
+        ui->progressBar->setValue((int)(i*100));
+    }
+    else
+    {
+//        ui->progressBar->setValue(0);
+        ui->progressBar->hide();
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

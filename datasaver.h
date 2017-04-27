@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include <QThread>
-#include <toexcel.h>
+#include <excel.h>
 #include <csv.h>
 #include <widget.h>
 
@@ -13,11 +13,12 @@ class DataSaver:public QObject
 public:
     DataSaver();
     QStringList buff;
+    Excel *excel;
 
 private:
     QThread *thread;
     Csv *csv;
-    Excel *excel;
+
 
 signals:
     void readyRead(QStringList s);

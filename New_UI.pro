@@ -17,27 +17,27 @@ SOURCES += main.cpp\
     portagent.cpp \
     settings.cpp \
     deviceparameter.cpp \
-    toexcel.cpp \
     crccheck.cpp \
     csv.cpp \
-    datasaver.cpp
+    datasaver.cpp \
+    excel.cpp
 
 HEADERS  += widget.h \
     portagent.h \
     settings.h \
     deviceparameter.h \
-    toexcel.h \
     crccheck.h \
     csv.h \
-    datasaver.h
+    datasaver.h \
+    excel.h
 
 FORMS    += widget.ui \
     settings.ui \
-    deviceparameter.ui \
-    toexcel.ui
+    deviceparameter.ui
 QT += serialport
 QT += sql
 QT += axcontainer
 
 RESOURCES += \
     style.qrc
+
