@@ -9,7 +9,10 @@ DeviceParameter::DeviceParameter(QWidget *parent) :
     this->setWindowTitle("仪器参数设置");
     this->setMaximumSize(635,335);
     this->setMinimumSize(635,335);
-    ui->spinBox_K->setRange(0,100);
+    ui->spinBox_K->setRange(1,1000);
+    ui->doubleSpinBox_H->setRange(0.1,254);
+    ui->spinBox_T->setRange(1,300);
+    ui->spinBox_OFF->setRange(10,60);
     ui->label_ID->setText(QString::number(device_ID));
     setWindowModality(Qt::ApplicationModal);
     connect(ui->buttonApplay,SIGNAL(clicked()),this,SLOT(buttonApply_clicked()));
