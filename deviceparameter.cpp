@@ -93,7 +93,7 @@ void DeviceParameter::initView(QStringList Settings)
         ui->spinBox_OFF->setValue(Settings.at(5).toInt());
         ui->checkBox_OFF->setChecked(true);
     }
-    ui->spinBox_T->setValue(Agent->getT());
+    ui->spinBox_instance->setValue(Agent->getT());
 }
 
 //还有一件事-----------------设置关闭窗口的ignore处理
