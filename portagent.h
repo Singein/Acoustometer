@@ -32,12 +32,13 @@ public:
     void Set_timeId(QString TimeId);//设置下位机要获取的历史数据时间点
     void setPort(QSerialPort *P);
     bool isStarted;
+    int  getT();
     void setMap(QMap<QString,int>* Map);
-    int rowcount;
     QString timeId; //格式 170227112140
 
 
 private:
+    int T;
     QThread *thread;
     QStringList *IDLIST;
     QString settings; //存储下位机要修改的参数设置
@@ -51,7 +52,6 @@ private:
     void Order_Start_Read_Instance(int id);//开始采集
     void Order_Stop_Read_Instance(int id);//停止采集
 
-    //---------数据解析（粗加工）------------------------------------------------
     QStringList Raw_Data_Instance(QByteArray* rec);//实时数据处理方法
     QStringList Raw_Data_TimePoint(QByteArray* rec);//历史数据组列表处理方法
     QStringList Raw_Data_History(QByteArray* rec);//某一编号时间组数据处理方法
@@ -60,17 +60,16 @@ private:
     QString expand(QString unexpand);
     QString modIdExpand(int id);
 
-    //----------数据解析（精加工）-----------------------------------------------
     void Data_Instance(QByteArray rec);
     void Data_History(QByteArray rec);
     void Data_TimePoint(QByteArray rec);
     void Data_Settings(QByteArray rec);
     void Data_ID(QByteArray rec);
 
-    //----------数据错误-----------------------------------------------
 //    QString Error_Data(QByteArray* rec);
     QString zero;
     bool ok;
+    bool isDataRecived;
 
 
 signals:
@@ -91,6 +90,7 @@ public slots:
     void OrderExcuted();
     void fakeTimerSlot(int order,int id);
     void SendOrders();
+    void setT(int t);
 };
 
 #endif // PORTAGENT_H

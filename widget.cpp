@@ -23,19 +23,19 @@ Widget::Widget(QWidget *parent) :
     connect(setDialog,SIGNAL(settingChanged(QSerialPort*)),this,SLOT(port_setting_changed(QSerialPort*))); //程序一运行，第一个触发的连接
     connect(setDialog,SIGNAL(getCollectedDataList()),this,SLOT(get_devices_list()));//第二个触发的连接，并设置了portAgent的port参数
     connect(deviceSettingDialog,SIGNAL(DeviceParameterChanged(QString)),this,SLOT(device_setting_changed(QString)));//当任意仪器的参数发生改变时触发
+    connect(deviceSettingDialog,SIGNAL(instance_t(int)),portAgent,SLOT(setT(int)));
     connect(ui->Button_start,SIGNAL(clicked()),this,SLOT(start_and_stop_collecting()));//实时数据采集 点击开始采集按钮后触发
     connect(ui->Button_import,SIGNAL(clicked()),this,SLOT(export_to_excel()));
     connect(ui->treeView,SIGNAL(clicked(QModelIndex)),this,SLOT(current_index_changed(QModelIndex)));//当树状列表上的节点被点击后触发，用来限定操作逻辑
     connect(portAgent,SIGNAL(addTreeNode(QStringList)),this,SLOT(initTree(QStringList)));//当有列表数据收到后触发
     connect(portAgent,SIGNAL(readInstanceData(QStringList)),this,SLOT(update_instance_data(QStringList)));//更新当前的实时数据
-    connect(this,SIGNAL(itemCheckStatusChanged(QString)),this,SLOT(read_history_data(QString)));//这个用来判断树状表中节点状态变化
+//    connect(this,SIGNAL(itemCheckStatusChanged(QString)),this,SLOT(read_history_data(QString)));//这个用来判断树状表中节点状态变化
     connect(this,SIGNAL(orders(int,int)),portAgent,SLOT(GiveOrders(int,int)),Qt::QueuedConnection);
     connect(portAgent,SIGNAL(fillTable(QStringList)),this,SLOT(fill_table_all(QStringList)));
     connect(this,SIGNAL(getInstanceBuff(QString)),portAgent->DS,SLOT(readCsv(QString)));
     connect(portAgent->DS,SIGNAL(readyRead(QStringList)),this,SLOT(read_csv(QStringList)));
     connect(this,SIGNAL(saveAsCsv(QStringList,QString)),portAgent->DS,SLOT(exportExcel(QStringList,QString)));
     connect(portAgent->DS->excel,SIGNAL(current_progress(double)),this,SLOT(set_progressBar_value(double)));
-
 }
 
 void Widget::load()
@@ -70,11 +70,12 @@ void Widget::current_index_changed(QModelIndex currentIndex)
     {
         ui->Button_import->hide();
         ui->Button_start->hide();
-        ui->label->setText("当前选中："+s);
+        ui->label->setText("当前选中: "+s);
         ui->treeView->expand(ui->treeView->currentIndex());
     }
     if(s.contains("实时数据"))
     {
+        ui->label->setText("表格内容: 测量仪"+get_device_id_toString()+" 实时数据");
         ui->Button_import->show();
         ui->Button_start->show();
         ui->tableWidget->clear();
@@ -100,13 +101,13 @@ void Widget::current_index_changed(QModelIndex currentIndex)
     }
     if(s == "历史数据")
     {
+        ui->label->setText("表格内容: 测量仪"+get_device_id_toString()+" 历史数据");
         ui->Button_start->hide();
         ui->Button_import->show();
         ui->Button_import->setEnabled(true);
         ui->treeView->expand(ui->treeView->currentIndex());
         ui->tableWidget->clear();
         initTable();
-        portAgent->rowcount = get_current_item()->rowCount();
         for(int i=0;i<get_current_item()->rowCount();i++)
         {
             QStandardItem *currentItem = get_current_item()->child(i);
@@ -117,12 +118,6 @@ void Widget::current_index_changed(QModelIndex currentIndex)
                 }
                 portAgent->Set_timeId(currentItem->text());
                 emit orders(ORDER_UPLOAD_HISTORY_DATA,get_device_id());
-            }
-            else
-            {
-                portAgent->rowcount--;
-                if(portAgent->rowcount==0)
-                    portAgent->rowcount = 1;
             }
         }
     }
@@ -138,7 +133,6 @@ void Widget::current_index_changed(QModelIndex currentIndex)
             initTable();
             if(get_current_item()->checkState()==0)
             {
-                portAgent->rowcount = get_current_item()->parent()->rowCount();
                 get_current_item()->setCheckState(Qt::CheckState::Checked);
                 for(int i=0;i<get_current_item()->parent()->rowCount();i++)
                 {
@@ -147,17 +141,10 @@ void Widget::current_index_changed(QModelIndex currentIndex)
                         portAgent->Set_timeId(currentItem->text());
                         emit orders(ORDER_UPLOAD_HISTORY_DATA,get_device_id());
                     }
-                    else
-                    {
-                        portAgent->rowcount--;
-                        if(portAgent->rowcount==0)
-                            portAgent->rowcount = 1;
-                    }
                 }
             }
             else
             {
-                portAgent->rowcount = get_current_item()->parent()->rowCount();
                 get_current_item()->setCheckState(Qt::CheckState::Unchecked);
                 for(int i=0;i<get_current_item()->parent()->rowCount();i++)
                 {
@@ -165,12 +152,6 @@ void Widget::current_index_changed(QModelIndex currentIndex)
                     if(currentItem->checkState()==2){
                         portAgent->Set_timeId(currentItem->text());
                         emit orders(ORDER_UPLOAD_HISTORY_DATA,get_device_id());
-                    }
-                    else
-                    {
-                        portAgent->rowcount--;
-                        if(portAgent->rowcount==0)
-                            portAgent->rowcount = 1;
                     }
                 }
             }
@@ -186,28 +167,32 @@ void Widget::current_index_changed(QModelIndex currentIndex)
 }
 
 void Widget::initTree(QStringList nodes)
-{   
-    QStandardItem *device = new QStandardItem("测量仪 "+nodes.at(0)); //这条是id，设备
-    map.insert(nodes.at(0),0);
-    QStandardItem *instance_data = new QStandardItem("实时数据");//这条是实时数据
-    QStandardItem *history_data = new QStandardItem("历史数据");//这条是历史数据
-    device->setEditable(false);
-    instance_data->setEditable(false);
-    history_data->setEditable(false);
-    for(int i = 1;i < nodes.length();i++)
-    {   
-        //逐条添加历史数据时间点
-        QStandardItem *node = new QStandardItem(nodes.at(i));
-        node->setEditable(false);
-        node->setCheckable(true);
-        history_data->appendRow(node);
+{   int index;
+    for(index=0;index<devices->rowCount();index++)
+        if(devices->child(index)->text().contains(nodes.at(0)))
+            break;
+    if((index==devices->rowCount()-1&&index!=0)||devices->rowCount()==0)
+    {
+        QStandardItem *device = new QStandardItem("测量仪 "+nodes.at(0)); //这条是id，设备
+        map.insert(nodes.at(0),0);
+        QStandardItem *instance_data = new QStandardItem("实时数据");
+        QStandardItem *history_data = new QStandardItem("历史数据");
+        device->setEditable(false);
+        instance_data->setEditable(false);
+        history_data->setEditable(false);
+        for(int i = 1;i < nodes.length();i++)
+        {
+            QStandardItem *node = new QStandardItem(nodes.at(i));
+            node->setEditable(false);
+            node->setCheckable(true);
+            history_data->appendRow(node);
+        }
+        device->appendRow(instance_data);
+        device->appendRow(history_data);
+        devices->appendRow(device);
+        model->appendRow(devices);//刷新modle
+        ui->treeView->setModel(model);//刷新treeview
     }
-    device->appendRow(instance_data);
-    device->appendRow(history_data);
-    devices->appendRow(device);
-    model->appendRow(devices);//刷新modle
-    ui->treeView->setModel(model);//刷新treeview
-    qDebug()<<"设备列表和设备时间组列表生成";
 }
 
 void Widget::initTable()
@@ -341,12 +326,10 @@ void Widget::on_treeView_customContextMenuRequested(const QPoint &pos)
 void Widget::port_setting_changed(QSerialPort* Port)
 {
     this->port = Port;
-    ui->label->setText(port->portName()+" "+QString::number(port->baudRate())+" "+QString::number(port->dataBits())+" "+QString::number(port->stopBits()));
 }
 
 void Widget::device_setting_changed(QString s)
 {
-    ui->label->setText(s);
     portAgent->Set_Settings(s);
     portAgent->GiveOrders(ORDER_CHANGE_SETTINGS,get_device_id());
 }
@@ -374,14 +357,12 @@ int Widget::get_device_id()
     if(s == "历史数据"|| s == "实时数据")
         s = currentItem->parent()->parent()->text();
     index = s.split(" ").at(1).toInt();
-//    ui->label->setText(QString::number(index));
     return index;
 }
 
 QString Widget::get_device_id_toString()
 {
     QStandardItem *currentItem = get_current_item();
-    int index = 0;
     QString s = currentItem->text();
     if(s.contains("测量仪"));
     else
@@ -399,7 +380,6 @@ void Widget::start_and_stop_collecting()
         map.insert(QString::number(get_device_id()),1);
         ui->Button_import->setEnabled(false);
         get_current_item()->setText("实时数据 ==> 正在采集");
-//        portAgent->GiveOrders(ORDER_START_COLLECTING,get_device_id());
         emit orders(ORDER_START_COLLECTING,get_device_id());
     }
     else
@@ -408,7 +388,6 @@ void Widget::start_and_stop_collecting()
         ui->Button_start->setText("开始采集");
         ui->Button_import->setEnabled(true);
         get_current_item()->setText("实时数据");
-//        portAgent->GiveOrders(ORDER_STOP_COLLECTING,get_device_id());
         emit orders(ORDER_STOP_COLLECTING,get_device_id());
 
     }
@@ -431,14 +410,7 @@ void Widget::super_show()
 void Widget::get_devices_list()
 {
     portAgent->setPort(port);
-//    portAgent->GiveOrders(ORDER_GET_DEVICE_LIST,0);
     emit orders(ORDER_GET_DEVICE_LIST,0);
-    qDebug()<<"获取设备列表请求已转交 port agent";
-}
-
-void Widget::read_history_data(QString s)
-{
-    ui->label->setText(s);
 }
 
 void Widget::export_to_excel()
@@ -465,18 +437,16 @@ void Widget::set_progressBar_value(double i)
 {
     if((int)(i*100)<100)
     {
+        ui->label->setText("正在导出数据...");
         ui->progressBar->show();
         ui->progressBar->setValue((int)(i*100));
     }
     else
     {
-//        ui->progressBar->setValue(0);
         ui->progressBar->hide();
+        ui->label->setText("");
     }
 }
-
-
-
 
 
 

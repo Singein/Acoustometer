@@ -41,3 +41,4 @@ QT += axcontainer
 RESOURCES += \
     style.qrc
 
+RC_ICONS = myapp.ico

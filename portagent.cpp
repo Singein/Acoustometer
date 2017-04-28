@@ -8,7 +8,8 @@ PortAgent::PortAgent()
 {
 //    DB = new Database;
     DS = new DataSaver;
-    rowcount = 1;
+    T = 1000;
+    isDataRecived = true;
     thread = new QThread;
     this->moveToThread(thread);
     thread->start();
@@ -35,6 +36,16 @@ void PortAgent::Set_timeId(QString TimeId)
     this->timeId = TimeId;
 }
 
+void PortAgent::setT(int t)
+{
+    this->T = t;
+}
+
+int PortAgent::getT()
+{
+    return this->T;
+}
+
 void PortAgent::setMap(QMap<QString, int> *Map)
 {
     this->map = Map;
@@ -59,23 +70,24 @@ void PortAgent::GiveOrders(int order,int id)
     default:break;
     }
 
-    if(orderList.length()==rowcount)
-    {
-        qDebug()<<orderList;
+//    if(orderList.length()==rowcount)
+//    {
+//        qDebug()<<orderList;
         emit send();
-        rowcount = 1;
-    }
+//        rowcount = 1;
+//    }
 }
 
 void PortAgent::SendOrders()
 {
-    if(!orderList.isEmpty())
-    {
-        QString s = orderList.dequeue();
-        QByteArray order = QByteArray::fromHex(s.toLatin1().data());
-        port->write(order,order.length());
-        qDebug()<<order.toHex().data();
-    }
+    if(isDataRecived)
+        if(!orderList.isEmpty())
+        {
+            QString s = orderList.dequeue();
+            QByteArray order = QByteArray::fromHex(s.toLatin1().data());
+            port->write(order,order.length());
+            isDataRecived = false;
+        }
 }
 
 void PortAgent::OrderExcuted()
@@ -133,7 +145,8 @@ void PortAgent::OrderExcuted()
 
         }
 //    }
-
+    if(data.length()!=0)
+        isDataRecived = true;
     emit send();
 }
 
@@ -143,7 +156,7 @@ void PortAgent::fakeTimerSlot(int order,int id)
     for (QMap<QString, int>::const_iterator it = map->cbegin(), end = map->cend(); it != end; ++it) {
         if(it.value()==1)
         {
-            QThread::msleep(1000);
+            QThread::msleep(T);
             GiveOrders(order,id);
         }
      }
@@ -267,7 +280,7 @@ QString PortAgent::Order_Get_Time_Point(int id){
     return readTimePointRequest;
 }
 
-QString PortAgent::Order_Upload_History_Data(int id)//170301120000
+QString PortAgent::Order_Upload_History_Data(int id)
 {
     CrcCheck *crc = new CrcCheck();
     QString UploadRequest;
@@ -313,9 +326,7 @@ void PortAgent::Order_Stop_Read_Instance(int id)
 {
     qDebug()<<"MODID:"<<id<<" "<<"Order_Stop_Collecting Gived";
 }
-//---------------------------------------------------------------
 
-//---------------------以下是数据粗加工----------------------------
 QStringList PortAgent::Raw_Data_Instance(QByteArray* rec)
 {
     QByteArray noCRCdata = rec->mid(0,rec->length()-2);
@@ -438,9 +449,7 @@ QStringList* PortAgent::Raw_Data_ID(QByteArray *rec)
     QString id = QString::number(rec->mid(2,1).toHex().toInt(&ok,16));
     return IDLIST;
 }
-//----------------------------------------------------------------
 
-//--------------------以下是数据精加工------------------------------
 void PortAgent::Data_Instance(QByteArray data)
 {
     QStringList dataList;
@@ -480,7 +489,6 @@ void PortAgent::Data_ID(QByteArray rec)
 {
 
 }
-//----------------------------------------------------------------
 
 
 

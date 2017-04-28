@@ -29,6 +29,7 @@ private:
 
 signals:
     void DeviceParameterChanged(QString s);
+    void instance_t(int t);
 
 
 private slots:

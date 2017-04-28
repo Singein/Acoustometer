@@ -82,7 +82,7 @@ private slots:
 //     void start_stop_all();
      void get_devices_list();//获取设备列表
      void current_index_changed(QModelIndex currentIndex);//当前选中改变
-     void read_history_data(QString s);//读取历史数据
+//     void read_history_data(QString s);//读取历史数据
      void update_instance_data(QStringList s);//更新实时数据
      void export_to_excel();
      void read_csv(QStringList s);
