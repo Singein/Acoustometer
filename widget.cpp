@@ -65,6 +65,7 @@ void Widget::current_index_changed(QModelIndex currentIndex)
     {
         ui->Button_import->hide();
         ui->Button_start->hide();
+        ui->label->setText("已连接设备数: "+QString::number(devices->rowCount()));
     }
     if(s.contains("测量仪"))
     {
