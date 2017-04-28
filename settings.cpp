@@ -7,8 +7,8 @@ Settings::Settings(QWidget *parent) :
     ui(new Ui::Settings)
 {
     ui->setupUi(this);
-//    this->setMaximumSize(400,200);
-//    this->setMinimumSize(400,200);
+    this->setMaximumSize(300,240);
+    this->setMinimumSize(300,240);
     setWindowModality(Qt::ApplicationModal);
     this->setWindowTitle("串口设置");
     ui->comboBox_Baud->setCurrentIndex(7);
