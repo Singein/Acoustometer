@@ -1,21 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>Plot</class>
- <widget class="QDialog" name="Plot">
+ <widget class="QWidget" name="Plot">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>698</width>
-    <height>495</height>
+    <width>674</width>
+    <height>476</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QCustomPlot" name="widget" native="true"/>
+    <widget class="QCustomPlot" name="widget_s" native="true"/>
+   </item>
+   <item>
+    <widget class="QCustomPlot" name="widget_f" native="true"/>
    </item>
   </layout>
  </widget>

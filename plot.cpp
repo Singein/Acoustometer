@@ -1,104 +1,20 @@
 #include "plot.h"
 #include "ui_plot.h"
 
+
 Plot::Plot(QWidget *parent) :
-    QDialog(parent),
+    QWidget(parent),
     ui(new Ui::Plot)
 {
     ui->setupUi(this);
-    QCustomPlot *customPlot;
-    customPlot = ui->widget;
-    QVector<double> x1(20), y1(20);
-    QVector<double> x2(100), y2(100);
-    QVector<double> x3(20), y3(20);
-    QVector<double> x4(20), y4(20);
-    for (int i=0; i<x1.size(); ++i)
-    {
-      x1[i] = i/(double)(x1.size()-1)*10;
-      y1[i] = qCos(x1[i]*0.8+qSin(x1[i]*0.16+1.0))*qSin(x1[i]*0.54)+1.4;
-    }
-    for (int i=0; i<x2.size(); ++i)
-    {
-      x2[i] = i/(double)(x2.size()-1)*10;
-      y2[i] = qCos(x2[i]*0.85+qSin(x2[i]*0.165+1.1))*qSin(x2[i]*0.50)+1.7;
-    }
-    for (int i=0; i<x3.size(); ++i)
-    {
-      x3[i] = i/(double)(x3.size()-1)*10;
-      y3[i] = 0.05+3*(0.5+qCos(x3[i]*x3[i]*0.2+2)*0.5)/(double)(x3[i]+0.7)+qrand()/(double)RAND_MAX*0.01;
-    }
-    for (int i=0; i<x4.size(); ++i)
-    {
-      x4[i] = x3[i];
-      y4[i] = (0.5-y3[i])+((x4[i]-2)*(x4[i]-2)*0.02);
-    }
-
-    // create and configure plottables:
-    QCPGraph *graph1 = customPlot->addGraph();
-    graph1->setData(x1, y1);
-    graph1->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, QPen(Qt::black, 1.5), QBrush(Qt::white), 9));
-    graph1->setPen(QPen(QColor(120, 120, 120), 2));
-
-//    QCPGraph *graph2 = customPlot->addGraph();
-//    graph2->setData(x2, y2);
-//    graph2->setPen(Qt::NoPen);
-//    graph2->setBrush(QColor(200, 200, 200, 20));
-//    graph2->setChannelFillGraph(graph1);
-
-    QCPBars *bars1 = new QCPBars(customPlot->xAxis, customPlot->yAxis);
-    bars1->setWidth(9/(double)x3.size());
-    bars1->setData(x3, y3);
-    bars1->setPen(Qt::NoPen);
-    bars1->setBrush(QColor(10, 140, 70, 160));
-
-    QCPBars *bars2 = new QCPBars(customPlot->xAxis, customPlot->yAxis);
-    bars2->setWidth(9/(double)x4.size());
-    bars2->setData(x4, y4);
-    bars2->setPen(Qt::NoPen);
-    bars2->setBrush(QColor(10, 100, 50, 70));
-    bars2->moveAbove(bars1);
-
-    // move bars above graphs and grid below bars:
-    customPlot->addLayer("abovemain", customPlot->layer("main"), QCustomPlot::limAbove);
-    customPlot->addLayer("belowmain", customPlot->layer("main"), QCustomPlot::limBelow);
-    graph1->setLayer("abovemain");
-    customPlot->xAxis->grid()->setLayer("belowmain");
-    customPlot->yAxis->grid()->setLayer("belowmain");
-
-    // set some pens, brushes and backgrounds:
-    customPlot->xAxis->setBasePen(QPen(Qt::white, 1));
-    customPlot->yAxis->setBasePen(QPen(Qt::white, 1));
-    customPlot->xAxis->setTickPen(QPen(Qt::white, 1));
-    customPlot->yAxis->setTickPen(QPen(Qt::white, 1));
-    customPlot->xAxis->setSubTickPen(QPen(Qt::white, 1));
-    customPlot->yAxis->setSubTickPen(QPen(Qt::white, 1));
-    customPlot->xAxis->setTickLabelColor(Qt::white);
-    customPlot->yAxis->setTickLabelColor(Qt::white);
-    customPlot->xAxis->grid()->setPen(QPen(QColor(140, 140, 140), 1, Qt::DotLine));
-    customPlot->yAxis->grid()->setPen(QPen(QColor(140, 140, 140), 1, Qt::DotLine));
-    customPlot->xAxis->grid()->setSubGridPen(QPen(QColor(80, 80, 80), 1, Qt::DotLine));
-    customPlot->yAxis->grid()->setSubGridPen(QPen(QColor(80, 80, 80), 1, Qt::DotLine));
-    customPlot->xAxis->grid()->setSubGridVisible(true);
-    customPlot->yAxis->grid()->setSubGridVisible(true);
-    customPlot->xAxis->grid()->setZeroLinePen(Qt::NoPen);
-    customPlot->yAxis->grid()->setZeroLinePen(Qt::NoPen);
-    customPlot->xAxis->setUpperEnding(QCPLineEnding::esSpikeArrow);
-    customPlot->yAxis->setUpperEnding(QCPLineEnding::esSpikeArrow);
-    QLinearGradient plotGradient;
-    plotGradient.setStart(0, 0);
-    plotGradient.setFinalStop(0, 350);
-    plotGradient.setColorAt(0, QColor(80, 80, 80));
-    plotGradient.setColorAt(1, QColor(50, 50, 50));
-    customPlot->setBackground(plotGradient);
-    QLinearGradient axisRectGradient;
-    axisRectGradient.setStart(0, 0);
-    axisRectGradient.setFinalStop(0, 350);
-    axisRectGradient.setColorAt(0, QColor(80, 80, 80));
-    axisRectGradient.setColorAt(1, QColor(30, 30, 30));
-    customPlot->axisRect()->setBackground(axisRectGradient);
-
-    customPlot->rescaleAxes();
-    customPlot->yAxis->setRange(0, 2);
+    f = new QList<double>;
+    s = new QList<double>;
+    plot_s = ui->widget_s;
+    plot_f = ui->widget_f;
+    graph_s = plot_s->addGraph();
+    graph_f = plot_f->addGraph();
+    viewInit(graph_s,plot_s);
+    viewInit(graph_f,plot_f);
 }
 
 Plot::~Plot()
@@ -106,13 +22,76 @@ Plot::~Plot()
     delete ui;
 }
 
-void Plot::setAgent(PortAgent *Agent)
+void Plot::setAgent(PortAgent *agent)
 {
-    this->Agent = Agent;
+    this->Agent = agent;
     connect(this->Agent,SIGNAL(addPlotNode(double,double)),this,SLOT(addNodes(double,double)));
+}
+
+void Plot::viewInit(QCPGraph *graph,QCustomPlot *plot)
+{
+    graph->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, QPen(Qt::black, 1.5), QBrush(Qt::white), 9));
+    graph->setPen(QPen(QColor(120, 120, 120), 2));
+    plot->addLayer("abovemain", plot_s->layer("main"), QCustomPlot::limAbove);
+    plot->addLayer("belowmain", plot_s->layer("main"), QCustomPlot::limBelow);
+    graph->setLayer("abovemain");
+    plot->xAxis->grid()->setLayer("belowmain");
+    plot->yAxis->grid()->setLayer("belowmain");
+    plot->xAxis->setBasePen(QPen(Qt::white, 1));
+    plot->yAxis->setBasePen(QPen(Qt::white, 1));
+    plot->xAxis->setTickPen(QPen(Qt::white, 1));
+    plot->yAxis->setTickPen(QPen(Qt::white, 1));
+    plot->xAxis->setSubTickPen(QPen(Qt::white, 1));
+    plot->yAxis->setSubTickPen(QPen(Qt::white, 1));
+    plot->xAxis->setTickLabelColor(Qt::white);
+    plot->yAxis->setTickLabelColor(Qt::white);
+    plot->xAxis->grid()->setPen(QPen(QColor(140, 140, 140), 1, Qt::DotLine));
+    plot->yAxis->grid()->setPen(QPen(QColor(140, 140, 140), 1, Qt::DotLine));
+    plot->xAxis->grid()->setSubGridPen(QPen(QColor(80, 80, 80), 1, Qt::DotLine));
+    plot->yAxis->grid()->setSubGridPen(QPen(QColor(80, 80, 80), 1, Qt::DotLine));
+    plot->xAxis->grid()->setSubGridVisible(true);
+    plot->yAxis->grid()->setSubGridVisible(true);
+    plot->xAxis->grid()->setZeroLinePen(Qt::NoPen);
+    plot->yAxis->grid()->setZeroLinePen(Qt::NoPen);
+    plot->xAxis->setUpperEnding(QCPLineEnding::esSpikeArrow);
+    plot->yAxis->setUpperEnding(QCPLineEnding::esSpikeArrow);
+    QLinearGradient plotGradient;
+    plotGradient.setStart(0, 0);
+    plotGradient.setFinalStop(0, 350);
+    plotGradient.setColorAt(0, QColor(80, 80, 80));
+    plotGradient.setColorAt(1, QColor(50, 50, 50));
+    plot->setBackground(plotGradient);
+    QLinearGradient axisRectGradient;
+    axisRectGradient.setStart(0, 0);
+    axisRectGradient.setFinalStop(0, 350);
+    axisRectGradient.setColorAt(0, QColor(80, 80, 80));
+    axisRectGradient.setColorAt(1, QColor(30, 30, 30));
+    plot->axisRect()->setBackground(axisRectGradient);
+    plot->rescaleAxes();
+    plot->yAxis->setRange(0, 50);
 }
 
 void Plot::addNodes(double x, double y)
 {
+    s->append(x);
+    f->append(y);
+    int length = s->length();
+    QVector<double> x1(length);
+    QVector<double> y1(length);
+    QVector<double> y2(length);
+
+    for(int i=0;i<length;i++)
+    {
+        x1[i] = i;
+        y1[i] = f->at(i)+i*2;
+        y2[i] = 2*i*i;
+    }
+
+    graph_s->setData(x1, y1);
+    graph_f->setData(x1, y2);
+
+    plot_s->replot();
+    plot_f->replot();
+
 
 }
