@@ -24,7 +24,7 @@
 namespace Ui {
 class Widget;
 }
-
+class Plot;
 class PortAgent;
 class DeviceParameter;
 
@@ -62,7 +62,7 @@ private:
      int get_device_id();//获取当前的设备的id
      QString get_device_id_toString();//同上，区别是返回qstring
      bool isInstance; //判断当前选中是否是在实时数据
-     void load();
+     void load();//加载样式
      int RowCount;
 
 
@@ -88,7 +88,7 @@ private slots:
      void export_to_excel();
      void read_csv(QStringList s);
      void set_progressBar_value(double i);
-
+     void plot_dialog_show();
      //     void start_stop_all();
      //     void read_history_data(QString s);//读取历史数据
 

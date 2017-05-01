@@ -21,12 +21,14 @@ Widget::Widget(QWidget *parent) :
     portAgent = new PortAgent; //port在 get_devices_list函数中获取，先进行无参的构造是为了下面的connect函数建立
     portAgent->setMap(map_point);
     deviceSettingDialog->sentAgent(portAgent);
+    plotDialog->setAgent(portAgent);
     connect(portSettingDialog,SIGNAL(settingChanged(QSerialPort*)),this,SLOT(port_setting_changed(QSerialPort*))); //程序一运行，第一个触发的连接
     connect(portSettingDialog,SIGNAL(getCollectedDataList()),this,SLOT(get_devices_list()));//第二个触发的连接，并设置了portAgent的port参数
     connect(deviceSettingDialog,SIGNAL(DeviceParameterChanged(QString)),this,SLOT(device_setting_changed(QString)));//当任意仪器的参数发生改变时触发
     connect(deviceSettingDialog,SIGNAL(instance_t(int)),portAgent,SLOT(setT(int)));
     connect(ui->Button_start,SIGNAL(clicked()),this,SLOT(start_and_stop_collecting()));//实时数据采集 点击开始采集按钮后触发
     connect(ui->Button_import,SIGNAL(clicked()),this,SLOT(export_to_excel()));
+    connect(ui->Button_plot,SIGNAL(clicked()),this,SLOT(plot_dialog_show()));
     connect(ui->treeView,SIGNAL(clicked(QModelIndex)),this,SLOT(current_index_changed(QModelIndex)));//当树状列表上的节点被点击后触发，用来限定操作逻辑
     connect(portAgent,SIGNAL(addTreeNode(QStringList)),this,SLOT(initTree(QStringList)));//当有列表数据收到后触发
     connect(portAgent,SIGNAL(readInstanceData(QStringList)),this,SLOT(update_instance_data(QStringList)));//更新当前的实时数据
@@ -350,6 +352,11 @@ void Widget::device_setting_Dialog_Show()
     deviceSettingDialog->setDeviceID(get_device_id());
     portAgent->GiveOrders(ORDER_GET_SETTINGS,get_device_id());
     deviceSettingDialog->show();
+}
+
+void Widget::plot_dialog_show()
+{
+    plotDialog->show();
 }
 
 int Widget::get_device_id()

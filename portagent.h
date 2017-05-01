@@ -40,7 +40,8 @@ public:
 private:
     int T;
     QThread *thread;
-    QStringList *IDLIST;
+    QString recivedTime;
+//    QStringList *IDLIST;
     QString settings; //存储下位机要修改的参数设置
     QQueue<QString> orderList;
     QString Order_Get_Settings(int id);//获取当前下位机参数指令
@@ -51,21 +52,18 @@ private:
     QString Order_Read_Instance_Data(int id);//获取实时数据
     void Order_Start_Read_Instance(int id);//开始采集
     void Order_Stop_Read_Instance(int id);//停止采集
-
     QStringList Raw_Data_Instance(QByteArray* rec);//实时数据处理方法
     QStringList Raw_Data_TimePoint(QByteArray* rec);//历史数据组列表处理方法
     QStringList Raw_Data_History(QByteArray* rec);//某一编号时间组数据处理方法
     QStringList Raw_Data_Settings(QByteArray* rec);//下位机当前参数数据处理方法
-    QStringList* Raw_Data_ID(QByteArray* rec);//下位机ID
-    QString expand(QString unexpand);
-    QString modIdExpand(int id);
-
+    QStringList* Raw_Data_ID(QByteArray* rec);//下位机ID   
     void Data_Instance(QByteArray rec);
     void Data_History(QByteArray rec);
     void Data_TimePoint(QByteArray rec);
     void Data_Settings(QByteArray rec);
     void Data_ID(QByteArray rec);
-
+    QString expand(QString unexpand);
+    QString modIdExpand(int id);
 //    QString Error_Data(QByteArray* rec);
     QString zero;
     bool ok;
@@ -77,6 +75,7 @@ signals:
     addTreeNode(QStringList s);
     fillTable(QStringList s);
     readInstanceData(QStringList data);
+    addPlotNode(double x,double y);
     writeCsv(QStringList s,QString id);
     deviceParameter(QStringList settings);
     fakeTimer(int order,int id);

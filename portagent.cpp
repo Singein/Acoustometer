@@ -92,7 +92,9 @@ void PortAgent::SendOrders()
 
 void PortAgent::OrderExcuted()
 {
-    QThread::msleep(10);
+    QThread::msleep(1);
+    QDateTime time = QDateTime::currentDateTime();//为了保证写入数据库的和界面实时更新的时间一致
+    recivedTime = time.toString("yyyy-MM-dd hh:mm:ss");
     bool ok;
     QByteArray data = port->readAll();
 //    qDebug() << "data recived ---> "<<"data length: "<<data.length()<<" bytes";
@@ -336,7 +338,6 @@ QStringList PortAgent::Raw_Data_Instance(QByteArray* rec)
     double vol = (double)((noCRCdata.mid(3,2).toHex().toInt(&ok,16)))/100;
     double fre = (double)(noCRCdata.mid(5,2).toHex().toInt(&ok,16))/100;
     instanceData<<QString::number(vol)<<QString::number(fre)<<QString::number(modid);
-    qDebug()<<instanceData;
     return instanceData;
 }
 
@@ -370,7 +371,7 @@ QStringList PortAgent::Raw_Data_History(QByteArray* rec)
     QStringList timePointTable;
     bool ok;
     int modId = noCRCCode.mid(0,1).toHex().toInt(&ok,16);
-    int fun = noCRCCode.mid(1,1).toHex().toInt(&ok,16);
+//    int fun = noCRCCode.mid(1,1).toHex().toInt(&ok,16);
     int year = noCRCCode.mid(2,1).toHex().toInt(&ok,16);
     int month = noCRCCode.mid(3,1).toHex().toInt(&ok,16);
     int day = noCRCCode.mid(4,1).toHex().toInt(&ok,16);
@@ -426,10 +427,10 @@ QStringList PortAgent::Raw_Data_Settings(QByteArray* rec)
 {
     QByteArray noCRCdata = rec->mid(0,rec->length()-2);
     QStringList settings;
-    int modid = (noCRCdata.mid(0,1).toHex().toInt(&ok,16));
-    int fun = noCRCdata.mid(1,1).toHex().toInt(&ok,16);
+//    int modid = (noCRCdata.mid(0,1).toHex().toInt(&ok,16));
+//    int fun = noCRCdata.mid(1,1).toHex().toInt(&ok,16);
 //    bool ok;
-    int num = (noCRCdata.mid(2,1).toHex().toInt(&ok,16));
+//    int num = (noCRCdata.mid(2,1).toHex().toInt(&ok,16));
 //    for(int i = 0;i < num;i++){settings<<QString::number(noCRCdata.mid(3+2*i,2).toInt(&ok,16));}
     int kValue = (noCRCdata.mid(3,2).toHex().toInt(&ok,16));
     double rangeMax = (double)(noCRCdata.mid(5,2).toHex().toInt(&ok,16))/100;
@@ -446,24 +447,22 @@ QStringList PortAgent::Raw_Data_Settings(QByteArray* rec)
 
 QStringList* PortAgent::Raw_Data_ID(QByteArray *rec)
 {
-    QString id = QString::number(rec->mid(2,1).toHex().toInt(&ok,16));
-    return IDLIST;
+//    QString id = QString::number(rec->mid(2,1).toHex().toInt(&ok,16));
+//    return IDLIST;
 }
 
 void PortAgent::Data_Instance(QByteArray data)
 {
     QStringList dataList;
     dataList = Raw_Data_Instance(&data);
-    if(true)  //判断实时数据的采集开关状态
-    {
-        QDateTime time = QDateTime::currentDateTime();//为了保证写入数据库的和界面实时更新的时间一致
-        dataList<<time.toString("yyyy-MM-dd hh:mm:ss");
-        QStringList s;
-        s<<time.toString("yyyy-MM-dd hh:mm:ss")<<dataList.at(0)<<dataList.at(1);
-        emit readInstanceData(dataList);//把存入数据库的时间同时发给主界面
-        emit fakeTimer(ORDER_READ_INSTANCE_DATA,dataList.at(2).toInt());
-        emit writeCsv(s,QDir::currentPath()+"//instance//"+dataList.at(2)+".csv");
-    }
+    dataList<<recivedTime;
+    QStringList s;
+    s<<recivedTime<<dataList.at(0)<<dataList.at(1);
+    emit readInstanceData(dataList);//把存入数据库的时间同时发给主界面
+    emit fakeTimer(ORDER_READ_INSTANCE_DATA,dataList.at(2).toInt());
+    emit writeCsv(s,QDir::currentPath()+"//instance//"+dataList.at(2)+".csv");
+    emit addPlotNode(dataList.at(0).toDouble(),dataList.at(1).toDouble());
+
 }
 
 void PortAgent::Data_History(QByteArray data)
