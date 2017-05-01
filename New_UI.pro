@@ -20,7 +20,9 @@ SOURCES += main.cpp\
     crccheck.cpp \
     csv.cpp \
     datasaver.cpp \
-    excel.cpp
+    excel.cpp \
+    qcustomplot.cpp \
+    plot.cpp
 
 HEADERS  += widget.h \
     portagent.h \
@@ -29,14 +31,18 @@ HEADERS  += widget.h \
     crccheck.h \
     csv.h \
     datasaver.h \
-    excel.h
+    excel.h \
+    qcustomplot.h \
+    plot.h
 
 FORMS    += widget.ui \
     settings.ui \
-    deviceparameter.ui
+    deviceparameter.ui \
+    plot.ui
 QT += serialport
 QT += sql
 QT += axcontainer
+QT += widgets printsupport
 
 RESOURCES += \
     style.qrc

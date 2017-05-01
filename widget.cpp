@@ -14,14 +14,15 @@ Widget::Widget(QWidget *parent) :
     map_point = &map;
 //    isAllDeviceWorking = false;
     viewInit();
-    setDialog = new Settings;
+    portSettingDialog = new Settings;
     portThread = new QThread;
     deviceSettingDialog = new DeviceParameter;
+    plotDialog = new Plot;
     portAgent = new PortAgent; //port在 get_devices_list函数中获取，先进行无参的构造是为了下面的connect函数建立
     portAgent->setMap(map_point);
     deviceSettingDialog->sentAgent(portAgent);
-    connect(setDialog,SIGNAL(settingChanged(QSerialPort*)),this,SLOT(port_setting_changed(QSerialPort*))); //程序一运行，第一个触发的连接
-    connect(setDialog,SIGNAL(getCollectedDataList()),this,SLOT(get_devices_list()));//第二个触发的连接，并设置了portAgent的port参数
+    connect(portSettingDialog,SIGNAL(settingChanged(QSerialPort*)),this,SLOT(port_setting_changed(QSerialPort*))); //程序一运行，第一个触发的连接
+    connect(portSettingDialog,SIGNAL(getCollectedDataList()),this,SLOT(get_devices_list()));//第二个触发的连接，并设置了portAgent的port参数
     connect(deviceSettingDialog,SIGNAL(DeviceParameterChanged(QString)),this,SLOT(device_setting_changed(QString)));//当任意仪器的参数发生改变时触发
     connect(deviceSettingDialog,SIGNAL(instance_t(int)),portAgent,SLOT(setT(int)));
     connect(ui->Button_start,SIGNAL(clicked()),this,SLOT(start_and_stop_collecting()));//实时数据采集 点击开始采集按钮后触发
@@ -65,12 +66,14 @@ void Widget::current_index_changed(QModelIndex currentIndex)
     {
         ui->Button_import->hide();
         ui->Button_start->hide();
+        ui->Button_plot->hide();
         ui->label->setText("已连接设备数: "+QString::number(devices->rowCount()));
     }
     if(s.contains("测量仪"))
     {
         ui->Button_import->hide();
         ui->Button_start->hide();
+        ui->Button_plot->hide();
         ui->label->setText("当前选中: "+s);
         ui->treeView->expand(ui->treeView->currentIndex());
     }
@@ -79,6 +82,7 @@ void Widget::current_index_changed(QModelIndex currentIndex)
         ui->label->setText("表格内容: 测量仪"+get_device_id_toString()+" 实时数据");
         ui->Button_import->show();
         ui->Button_start->show();
+        ui->Button_plot->show();
         ui->tableWidget->clear();
         initTable();
         emit getInstanceBuff(QDir::currentPath()+"//instance//"+get_device_id_toString()+".csv");
@@ -105,6 +109,7 @@ void Widget::current_index_changed(QModelIndex currentIndex)
         ui->label->setText("表格内容: 测量仪"+get_device_id_toString()+" 历史数据");
         ui->Button_start->hide();
         ui->Button_import->show();
+        ui->Button_plot->show();
         ui->Button_import->setEnabled(true);
         ui->treeView->expand(ui->treeView->currentIndex());
         ui->tableWidget->clear();
@@ -160,10 +165,10 @@ void Widget::current_index_changed(QModelIndex currentIndex)
         }
     }
 
-    if(currentItem->checkState()==Qt::CheckState::Checked)
-    {
-        emit itemCheckStatusChanged(s);
-    }
+//    if(currentItem->checkState()==Qt::CheckState::Checked)
+//    {
+//        emit itemCheckStatusChanged(s);
+//    }
 
 }
 
@@ -224,6 +229,7 @@ void Widget::viewInit()
     devices->setEditable(false);
     ui->Button_import->hide();
     ui->Button_start->hide(); 
+    ui->Button_plot->hide();
     //------------------------------------------------
     qDebug()<<"-----------声强检测仪输出日志--------------";
     qDebug()<<"树状列表根结点初始化成功";
@@ -273,7 +279,6 @@ void Widget::add_table_row(QStringList items)
     ui->tableWidget->item(rowCount, 0)->setTextColor(QColor(187,187,187));
     ui->tableWidget->item(rowCount, 1)->setTextColor(QColor(187,187,187));
     ui->tableWidget->item(rowCount, 2)->setTextColor(QColor(187,187,187));
-
 //    ui->tableWidget->viewport()->setFocusPolicy(Qt::NoFocus);
     RowCount ++;
     ui->tableWidget->setRowCount(rowCount+2);
@@ -294,7 +299,7 @@ void Widget::on_treeView_customContextMenuRequested(const QPoint &pos)
     action_port_setting = new QAction("串口设置");
     action_device_setting = new QAction("仪器设置");
     action_start_stop_All = new QAction;
-    connect(action_port_setting,SIGNAL(triggered(bool)),this,SLOT(setting_Dialog_Show()));
+    connect(action_port_setting,SIGNAL(triggered(bool)),this,SLOT(port_setting_Dialog_Show()));
     connect(action_device_setting,SIGNAL(triggered(bool)),this,SLOT(device_setting_Dialog_Show()));
 //    connect(action_start_stop_All,SIGNAL(triggered(bool)),this,SLOT(start_stop_all()));
     if(currentItem->text() == "设备列表")
@@ -335,9 +340,9 @@ void Widget::device_setting_changed(QString s)
     portAgent->GiveOrders(ORDER_CHANGE_SETTINGS,get_device_id());
 }
 
-void Widget::setting_Dialog_Show()
+void Widget::port_setting_Dialog_Show()
 {
-    setDialog->show();
+    portSettingDialog->show();
 }
 
 void Widget::device_setting_Dialog_Show()
@@ -405,7 +410,7 @@ QStandardItem* Widget::get_current_item()
 void Widget::super_show()
 {
     this->show();
-    setDialog->show();
+    portSettingDialog->show();
 }
 
 void Widget::get_devices_list()

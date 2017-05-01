@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>885</width>
-    <height>501</height>
+    <width>818</width>
+    <height>482</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -87,6 +87,13 @@
         </size>
        </property>
       </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="Button_plot">
+       <property name="text">
+        <string>二维曲线</string>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="QPushButton" name="Button_start">
