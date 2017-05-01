@@ -32,8 +32,8 @@ void Plot::viewInit(QCPGraph *graph,QCustomPlot *plot)
 {
     graph->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, QPen(Qt::black, 1.5), QBrush(Qt::white), 9));
     graph->setPen(QPen(QColor(120, 120, 120), 2));
-    plot->addLayer("abovemain", plot_s->layer("main"), QCustomPlot::limAbove);
-    plot->addLayer("belowmain", plot_s->layer("main"), QCustomPlot::limBelow);
+    plot->addLayer("abovemain", plot->layer("main"), QCustomPlot::limAbove);
+    plot->addLayer("belowmain", plot->layer("main"), QCustomPlot::limBelow);
     graph->setLayer("abovemain");
     plot->xAxis->grid()->setLayer("belowmain");
     plot->yAxis->grid()->setLayer("belowmain");
