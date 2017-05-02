@@ -64,12 +64,17 @@ private:
      bool isInstance; //判断当前选中是否是在实时数据
      void load();//加载样式
      int RowCount;
+     int history_interval;
+     QString count_time(QString time,int i);
+     QStringList getTableData();
 
 
 signals:
      void orders(int order,int id);
      void getInstanceBuff(QString id);
      void saveAsCsv(QStringList s,QString id);
+     void plotData(QStringList s,QString content);
+     void plotClear();
 //     void itemCheckStatusChanged(QString s); //当历史数据时间组选中状态改变的时候
 
 
@@ -89,6 +94,7 @@ private slots:
      void read_csv(QStringList s);
      void set_progressBar_value(double i);
      void plot_dialog_show();
+     void set_history_interval(int t);
      //     void start_stop_all();
      //     void read_history_data(QString s);//读取历史数据
 

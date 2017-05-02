@@ -482,6 +482,8 @@ void PortAgent::Data_TimePoint(QByteArray data)
 void PortAgent::Data_Settings(QByteArray data)
 {
     emit deviceParameter(Raw_Data_Settings(&data));
+    emit interval(Raw_Data_Settings(&data).at(4).toInt());
+//    qDebug()<<"raw data:     -----------"<<Raw_Data_Settings(&data).at(4);
 }
 
 void PortAgent::Data_ID(QByteArray rec)

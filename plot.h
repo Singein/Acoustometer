@@ -6,6 +6,9 @@
 #include <qcustomplot.h>
 #include <QVector>
 
+#define STRENGTH 0
+#define FREQUENCY 1
+
 namespace Ui {
 class Plot;
 }
@@ -21,17 +24,19 @@ public:
 private:
     Ui::Plot *ui;
     PortAgent *Agent;
-    QList<double> *f;
-    QList<double> *s;
+    QList<double> f;
+    QList<double> s;
     QCustomPlot *plot_s;
     QCustomPlot *plot_f;
     QCPGraph *graph_s;
     QCPGraph *graph_f;
-    void viewInit(QCPGraph *graph,QCustomPlot *plot);
+    void viewInit(QCPGraph *graph,QCustomPlot *plot,int type);
 
 
 private slots:
-    void addNodes(double x,double y);
+    void addNode(double x,double y);
+    void addNodes(QStringList data,QString title);
+    void plotClear();
 };
 
 #endif // PLOT_H

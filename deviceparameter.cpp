@@ -94,6 +94,10 @@ void DeviceParameter::initView(QStringList Settings)
         ui->checkBox_OFF->setChecked(true);
     }
     ui->spinBox_instance->setValue(Agent->getT());
+
+    ui->label_time->setText(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
+    ui->label_time_device->setText(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
+
 }
 
 //还有一件事-----------------设置关闭窗口的ignore处理

@@ -78,6 +78,7 @@ signals:
     addPlotNode(double x,double y);
     writeCsv(QStringList s,QString id);
     deviceParameter(QStringList settings);
+    interval(int t);
     fakeTimer(int order,int id);
     send();
 
