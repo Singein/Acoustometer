@@ -21,6 +21,7 @@ public:
     explicit Plot(QWidget *parent = 0);
     ~Plot();
     void setAgent(PortAgent *agent);
+
 private:
     Ui::Plot *ui;
     PortAgent *Agent;
@@ -34,9 +35,8 @@ private:
 
 
 private slots:
-    void addNode(double x,double y);
-    void addNodes(QStringList data);
-    void plotClear(QString title);
+    void addNodes(QStringList data,QString title);
+    void flexable();
 };
 
 #endif // PLOT_H

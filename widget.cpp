@@ -37,9 +37,7 @@ Widget::Widget(QWidget *parent) :
     connect(this,SIGNAL(saveAsCsv(QStringList,QString)),portAgent->DS,SLOT(exportExcel(QStringList,QString)));
     connect(this,SIGNAL(orders(int,int)),portAgent,SLOT(GiveOrders(int,int)),Qt::QueuedConnection);
     connect(this,SIGNAL(getInstanceBuff(QString)),portAgent->DS,SLOT(readCsv(QString)));
-    connect(this,SIGNAL(plotData(QStringList)),this->plotDialog,SLOT(addNodes(QStringList)));
-
-
+    connect(this,SIGNAL(plotData(QStringList,QString)),this->plotDialog,SLOT(addNodes(QStringList,QString)));
 }
 
 void Widget::load()
@@ -83,16 +81,13 @@ void Widget::current_index_changed(QModelIndex currentIndex)
     if(s.contains("实时数据"))
     {
         ui->label->setText("表格内容: 测量仪"+get_device_id_toString()+" 实时数据");
-        if(map.value(get_device_id_toString())==0)
-        {
-            ui->Button_import->show();
-            ui->Button_start->show();
-            ui->Button_plot->show();
-            ui->tableWidget->clear();
-            initTable();
-            emit plotClear("测量仪-"+get_device_id_toString()+" 历史数据");
-            emit getInstanceBuff(QDir::currentPath()+"//instance//"+get_device_id_toString()+".csv");
-        }
+        ui->Button_import->show();
+        ui->Button_start->show();
+        ui->Button_plot->show();
+        ui->tableWidget->clear();
+        initTable();
+        emit getInstanceBuff(QDir::currentPath()+"//instance//"+get_device_id_toString()+".csv");
+
         isInstance = true;
         if(s.contains("正在采集"))
         {
@@ -104,10 +99,6 @@ void Widget::current_index_changed(QModelIndex currentIndex)
             ui->Button_start->setText("开始采集");
             ui->Button_import->setEnabled(true);
         }
-
-        /*-------------------------------------------------------------*/
-        qDebug()<<portAgent->map->value(get_device_id_toString());
-
     }
     if(s == "历史数据")
     {
@@ -119,13 +110,12 @@ void Widget::current_index_changed(QModelIndex currentIndex)
         ui->treeView->expand(ui->treeView->currentIndex());
         ui->tableWidget->clear();
         initTable();
-        emit plotClear("测量仪-"+get_device_id_toString()+" 历史数据");
         for(int i=0;i<get_current_item()->rowCount();i++)
         {
             QStandardItem *currentItem = get_current_item()->child(i);
             if(currentItem->checkState()==2){
-                if(map.value(get_device_id_toString())==1){
-                    QMessageBox::warning(this,"Warning","请先停止实时数据采集！");
+                if(isInstanceDataCollecting()){
+                    QMessageBox::warning(this,"Warning","请先停止正在进行的实时数据采集！");
                     return;
                 }
                 portAgent->Set_timeId(currentItem->text());
@@ -136,15 +126,14 @@ void Widget::current_index_changed(QModelIndex currentIndex)
 
     if(s.contains("-"))
     {
-        if(map.value(get_device_id_toString())==1)
-            QMessageBox::warning(this,"Warning","请先停止实时数据采集！");
+        ui->Button_start->hide();
+        ui->Button_import->show();
+        ui->Button_plot->show();
+        if(isInstanceDataCollecting())
+            QMessageBox::warning(this,"Warning","请先停止正在进行的实时数据采集！");
         else{
-            ui->Button_start->hide();
-            ui->Button_import->show();
             ui->tableWidget->clear();
             initTable();
-            emit plotClear("测量仪-"+get_device_id_toString()+" 历史数据");
-//            emit orders(ORDER_GET_SETTINGS,get_device_id());
             if(get_current_item()->checkState()==0)
             {
                 get_current_item()->setCheckState(Qt::CheckState::Checked);
@@ -160,13 +149,19 @@ void Widget::current_index_changed(QModelIndex currentIndex)
             else
             {
                 get_current_item()->setCheckState(Qt::CheckState::Unchecked);
-                for(int i=0;i<get_current_item()->parent()->rowCount();i++)
+                int i;
+                for(i=0;i<get_current_item()->parent()->rowCount();i++)
                 {
                     QStandardItem *currentItem = get_current_item()->parent()->child(i);
                     if(currentItem->checkState()==2){
                         portAgent->Set_timeId(currentItem->text());
                         emit orders(ORDER_UPLOAD_HISTORY_DATA,get_device_id());
                     }
+                }
+                if(i==get_current_item()->parent()->rowCount())
+                {
+                    QStringList s;
+                    emit plotData(s,"测量仪-"+get_device_id_toString()+" 历史数据");
                 }
             }
 
@@ -242,12 +237,6 @@ void Widget::viewInit()
     qDebug()<<"界面初始化完毕";
 }
 
-void Widget::set_history_interval(int t)
-{
-    this->history_interval = t;
-    qDebug()<<"set history interval called!";
-}
-
 QString Widget::count_time(QString time,int i)
 {
 //    QDateTime t = QDateTime::fromString(time,"yyyy-MM-dd hh:mm:ss");
@@ -267,7 +256,7 @@ void Widget::fill_table_all(QStringList s)
         items<<s.at(i).split(" ").at(2)+" "+s.at(i).split(" ").at(3);
         add_table_row(items);
     }
-    emit plotData(getTableData());
+    emit plotData(getTableData(),"测量仪-"+get_device_id_toString()+" 历史数据");
 }
 
 void Widget::read_csv(QStringList s)
@@ -281,10 +270,8 @@ void Widget::read_csv(QStringList s)
             items<<s.at(i).split(",").at(0);
             add_table_row(items);
         }
-        emit plotData(getTableData());
+        emit plotData(getTableData(),"测量仪-"+get_device_id_toString()+" 实时数据");
     }
-    else
-        emit plotClear("测量仪-"+get_device_id_toString()+" 实时数据");
 }
 
 QStringList Widget::getTableData()
@@ -328,7 +315,10 @@ void Widget::add_table_row(QStringList items)
 void Widget::update_instance_data(QStringList s)
 {
     if(s.at(2) == get_device_id_toString() && isInstance)
+    {
         add_table_row(s);
+        emit plotData(getTableData(),"测量仪-"+get_device_id_toString()+" 实时数据");
+    }
 }
 
 void Widget::on_treeView_customContextMenuRequested(const QPoint &pos)
@@ -499,7 +489,16 @@ void Widget::set_progressBar_value(double i)
     }
 }
 
-
+bool Widget::isInstanceDataCollecting()
+{
+    for (QMap<QString, int>::const_iterator it = map_point->cbegin(), end = map_point->cend(); it != end; ++it) {
+        if(it.value()==1)
+        {
+            return true;
+        }
+     }
+    return false;
+}
 
 
 

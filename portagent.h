@@ -77,7 +77,7 @@ signals:
     addTreeNode(QStringList s);
     fillTable(QStringList s);
     readInstanceData(QStringList data);
-    addPlotNode(double x,double y);
+    addPlotNode(double x,double y,QString id);
     writeCsv(QStringList s,QString id);
     deviceParameter(QStringList settings);
     fakeTimer(int order,int id);

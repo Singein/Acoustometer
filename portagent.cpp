@@ -92,7 +92,7 @@ void PortAgent::SendOrders()
 
 void PortAgent::OrderExcuted()
 {
-    QThread::msleep(1);
+    QThread::msleep(5);
     QDateTime time = QDateTime::currentDateTime();//为了保证写入数据库的和界面实时更新的时间一致
     recivedTime = time.toString("yyyy-MM-dd hh:mm:ss");
     bool ok;

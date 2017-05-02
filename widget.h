@@ -67,14 +67,15 @@ private:
      int history_interval;
      QString count_time(QString time,int i);
      QStringList getTableData();
+     bool isInstanceDataCollecting();
 
 
 signals:
      void orders(int order,int id);
      void getInstanceBuff(QString id);
      void saveAsCsv(QStringList s,QString id);
-     void plotData(QStringList s);
-     void plotClear(QString title);
+     void plotData(QStringList s,QString title);
+
 //     void itemCheckStatusChanged(QString s); //当历史数据时间组选中状态改变的时候
 
 
@@ -94,7 +95,7 @@ private slots:
      void read_csv(QStringList s);
      void set_progressBar_value(double i);
      void plot_dialog_show();
-     void set_history_interval(int t);
+
      //     void start_stop_all();
      //     void read_history_data(QString s);//读取历史数据
 

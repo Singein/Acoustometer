@@ -14,6 +14,7 @@ Plot::Plot(QWidget *parent) :
     graph_f = plot_f->addGraph();
     viewInit(graph_s,plot_s,STRENGTH);
     viewInit(graph_f,plot_f,FREQUENCY);
+    connect(ui->pushButton,SIGNAL(clicked(bool)),this,SLOT(flexable()));
 }
 
 Plot::~Plot()
@@ -24,13 +25,13 @@ Plot::~Plot()
 void Plot::setAgent(PortAgent *agent)
 {
     this->Agent = agent;
-    connect(this->Agent,SIGNAL(addPlotNode(double,double)),this,SLOT(addNode(double,double)));
+//    connect(this->Agent,SIGNAL(addPlotNode(double,double,QString)),this,SLOT(addNode(double,double,QString)));
 }
 
 void Plot::viewInit(QCPGraph *graph,QCustomPlot *plot,int type)
 {
     graph->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, QPen(Qt::black, 1.5), QBrush(Qt::white), 9));
-     plot->xAxis->setLabel("时间(s)");
+    plot->xAxis->setLabel("时间(s)");
     if(type == 0){
         plot->yAxis->setLabel("声强(W/cm²)");
         plot->xAxis->setRange(0, 10);
@@ -83,28 +84,11 @@ void Plot::viewInit(QCPGraph *graph,QCustomPlot *plot,int type)
     plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
 }
 
-void Plot::addNode(double x, double y)
-{
-    s.append(x);
-    f.append(y);
-    int length = s.length();
-    QVector<double> x1(length);
-    QVector<double> y1(length);
-    QVector<double> y2(length);
-    for(int i=0;i<length;i++)
-    {
-        x1[i] = i;
-        y1[i] = s.at(i);
-        y2[i] = f.at(i);
-    }
-    graph_s->setData(x1, y1);
-    graph_f->setData(x1, y2);
-    plot_s->replot();
-    plot_f->replot();
-}
 
-void Plot::addNodes(QStringList data)
+
+void Plot::addNodes(QStringList data,QString title)
 {
+    this->setWindowTitle(title);
     int length = data.length();
     QVector<double> x1(length);
     QVector<double> y1(length);
@@ -121,9 +105,15 @@ void Plot::addNodes(QStringList data)
     plot_f->replot();
 }
 
-void Plot::plotClear(QString title)
+
+void Plot::flexable()
 {
-    plot_s->clearGraphs();
-    plot_f->clearGraphs();
-    this->setWindowTitle(title);
+    plot_s->xAxis->setRange(0, graph_s->dataCount());
+    plot_s->yAxis->setRange(0, 250);
+
+    plot_f->xAxis->setRange(0, graph_f->dataCount());
+    plot_f->yAxis->setRange(0, 200);
+    plot_s->replot();
+    plot_f->replot();
 }
+
