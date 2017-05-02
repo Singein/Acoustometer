@@ -25,7 +25,6 @@ public:
     PortAgent();
     ~PortAgent();
     QSerialPort *port;
-//    Database *DB;
     DataSaver *DS;
     QMap<QString,int>* map;
     void Set_Settings(QString Settings);//设置下位机即将要应用的参数
@@ -41,7 +40,6 @@ private:
     int T;
     QThread *thread;
     QString recivedTime;
-//    QStringList *IDLIST;
     QString settings; //存储下位机要修改的参数设置
     QQueue<QString> orderList;
     QString Order_Get_Settings(int id);//获取当前下位机参数指令
@@ -64,10 +62,14 @@ private:
     void Data_ID(QByteArray rec);
     QString expand(QString unexpand);
     QString modIdExpand(int id);
-//    QString Error_Data(QByteArray* rec);
     QString zero;
     bool ok;
     bool isDataRecived;
+
+    //    QString Error_Data(QByteArray* rec);
+    //    QStringList *IDLIST;
+
+
 
 
 signals:
@@ -78,7 +80,6 @@ signals:
     addPlotNode(double x,double y);
     writeCsv(QStringList s,QString id);
     deviceParameter(QStringList settings);
-    interval(int t);
     fakeTimer(int order,int id);
     send();
 

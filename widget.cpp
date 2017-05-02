@@ -31,14 +31,13 @@ Widget::Widget(QWidget *parent) :
     connect(ui->treeView,SIGNAL(clicked(QModelIndex)),this,SLOT(current_index_changed(QModelIndex)));//当树状列表上的节点被点击后触发，用来限定操作逻辑
     connect(portAgent,SIGNAL(addTreeNode(QStringList)),this,SLOT(initTree(QStringList)));//当有列表数据收到后触发
     connect(portAgent,SIGNAL(readInstanceData(QStringList)),this,SLOT(update_instance_data(QStringList)));//更新当前的实时数据
-    connect(portAgent,SIGNAL(interval(int)),this,SLOT(set_history_interval(int)),Qt::QueuedConnection);
     connect(portAgent,SIGNAL(fillTable(QStringList)),this,SLOT(fill_table_all(QStringList)));
     connect(portAgent->DS,SIGNAL(readyRead(QStringList)),this,SLOT(read_csv(QStringList)));
     connect(portAgent->DS->excel,SIGNAL(current_progress(double)),this,SLOT(set_progressBar_value(double)));
     connect(this,SIGNAL(saveAsCsv(QStringList,QString)),portAgent->DS,SLOT(exportExcel(QStringList,QString)));
     connect(this,SIGNAL(orders(int,int)),portAgent,SLOT(GiveOrders(int,int)),Qt::QueuedConnection);
     connect(this,SIGNAL(getInstanceBuff(QString)),portAgent->DS,SLOT(readCsv(QString)));
-    connect(this,SIGNAL(plotData(QStringList,QString)),this->plotDialog,SLOT(addNodes(QStringList,QString)));
+    connect(this,SIGNAL(plotData(QStringList)),this->plotDialog,SLOT(addNodes(QStringList)));
 
 
 }
@@ -91,7 +90,7 @@ void Widget::current_index_changed(QModelIndex currentIndex)
             ui->Button_plot->show();
             ui->tableWidget->clear();
             initTable();
-            emit plotClear();
+            emit plotClear("测量仪-"+get_device_id_toString()+" 历史数据");
             emit getInstanceBuff(QDir::currentPath()+"//instance//"+get_device_id_toString()+".csv");
         }
         isInstance = true;
@@ -120,8 +119,7 @@ void Widget::current_index_changed(QModelIndex currentIndex)
         ui->treeView->expand(ui->treeView->currentIndex());
         ui->tableWidget->clear();
         initTable();
-        emit plotClear();
-        emit orders(ORDER_GET_SETTINGS,get_device_id());
+        emit plotClear("测量仪-"+get_device_id_toString()+" 历史数据");
         for(int i=0;i<get_current_item()->rowCount();i++)
         {
             QStandardItem *currentItem = get_current_item()->child(i);
@@ -145,8 +143,8 @@ void Widget::current_index_changed(QModelIndex currentIndex)
             ui->Button_import->show();
             ui->tableWidget->clear();
             initTable();
-            emit plotClear();
-            emit orders(ORDER_GET_SETTINGS,get_device_id());
+            emit plotClear("测量仪-"+get_device_id_toString()+" 历史数据");
+//            emit orders(ORDER_GET_SETTINGS,get_device_id());
             if(get_current_item()->checkState()==0)
             {
                 get_current_item()->setCheckState(Qt::CheckState::Checked);
@@ -266,10 +264,10 @@ void Widget::fill_table_all(QStringList s)
         QStringList items;
         items<<s.at(i).split(" ").at(0);
         items<<s.at(i).split(" ").at(1);
-        items<<count_time(s.at(i).split(" ").at(2)+" "+s.at(i).split(" ").at(3),i-2);
+        items<<s.at(i).split(" ").at(2)+" "+s.at(i).split(" ").at(3);
         add_table_row(items);
     }
-    emit plotData(getTableData(),"测量仪-"+get_device_id_toString()+" 历史数据");
+    emit plotData(getTableData());
 }
 
 void Widget::read_csv(QStringList s)
@@ -283,8 +281,10 @@ void Widget::read_csv(QStringList s)
             items<<s.at(i).split(",").at(0);
             add_table_row(items);
         }
-        emit plotData(getTableData(),"测量仪-"+get_device_id_toString()+" 实时数据");
+        emit plotData(getTableData());
     }
+    else
+        emit plotClear("测量仪-"+get_device_id_toString()+" 实时数据");
 }
 
 QStringList Widget::getTableData()

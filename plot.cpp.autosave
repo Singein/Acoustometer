@@ -30,7 +30,7 @@ void Plot::setAgent(PortAgent *agent)
 void Plot::viewInit(QCPGraph *graph,QCustomPlot *plot,int type)
 {
     graph->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, QPen(Qt::black, 1.5), QBrush(Qt::white), 9));
-     plot->xAxis->setLabel("时间(s)");
+    plot->xAxis->setLabel("时间(s)");
     if(type == 0){
         plot->yAxis->setLabel("声强(W/cm²)");
         plot->xAxis->setRange(0, 10);
@@ -83,8 +83,9 @@ void Plot::viewInit(QCPGraph *graph,QCustomPlot *plot,int type)
     plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
 }
 
-void Plot::addNode(double x, double y)
+void Plot::addNode(double x, double y,QString id)
 {
+//    if(this->id == id)
     s.append(x);
     f.append(y);
     int length = s.length();
@@ -126,4 +127,15 @@ void Plot::plotClear(QString title)
     plot_s->clearGraphs();
     plot_f->clearGraphs();
     this->setWindowTitle(title);
+}
+
+void Plot::flexable()
+{   
+    plot_s->xAxis->setRange(0, graph_s->dataCount());
+    plot_f->xAxis->setRange(0, graph_f->dataCount());
+}
+
+void Plot::setId(QString id)
+{
+    this->id = id;
 }

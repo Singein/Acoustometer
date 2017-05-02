@@ -21,6 +21,7 @@ public:
     explicit Plot(QWidget *parent = 0);
     ~Plot();
     void setAgent(PortAgent *agent);
+    void setId(QString id);
 private:
     Ui::Plot *ui;
     PortAgent *Agent;
@@ -31,12 +32,14 @@ private:
     QCPGraph *graph_s;
     QCPGraph *graph_f;
     void viewInit(QCPGraph *graph,QCustomPlot *plot,int type);
+    QString id;
 
 
 private slots:
-    void addNode(double x,double y);
+    void addNode(double x,double y,QString id);
     void addNodes(QStringList data);
     void plotClear(QString title);
+    void flexable();
 };
 
 #endif // PLOT_H

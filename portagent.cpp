@@ -371,7 +371,6 @@ QStringList PortAgent::Raw_Data_History(QByteArray* rec)
     QStringList timePointTable;
     bool ok;
     int modId = noCRCCode.mid(0,1).toHex().toInt(&ok,16);
-//    int fun = noCRCCode.mid(1,1).toHex().toInt(&ok,16);
     int year = noCRCCode.mid(2,1).toHex().toInt(&ok,16);
     int month = noCRCCode.mid(3,1).toHex().toInt(&ok,16);
     int day = noCRCCode.mid(4,1).toHex().toInt(&ok,16);
@@ -382,28 +381,31 @@ QStringList PortAgent::Raw_Data_History(QByteArray* rec)
     int len = noCRCCode.mid(9,1).toHex().toInt(&ok,16);
     timePointTable<<QString::number(modId,10)<<QString::number(len,10);
 
-    QString y = QString::number(year,10);
-    QString m = QString::number(month,10);
-    QString d = QString::number(day,10);
-    QString h = QString::number(hour,10);
-    QString M = QString::number(minute,10);
-    QString s = QString::number(second,10);
+    for(int i=0;i<len;i++){      
+        QString y = QString::number(year,10);
+        QString m = QString::number(month,10);
+        QString d = QString::number(day,10);
+        QString h = QString::number(hour,10);
+        QString M = QString::number(minute,10);
+        QString s = QString::number(second,10);
 
-    if(y.length()<4)
-        y = "20"+y;
-    if(m.length()<2)
-        m = "0"+m;
-    if(d.length()<2)
-        d = "0"+d;
-    if(h.length()<2)
-        h = "0"+h;
-    if(M.length()<2)
-        M = "0"+M;
-    if(s.length()<2)
-        s = "0"+s;
+        if(y.length()<4)
+            y = "20"+y;
+        if(m.length()<2)
+            m = "0"+m;
+        if(d.length()<2)
+            d = "0"+d;
+        if(h.length()<2)
+            h = "0"+h;
+        if(M.length()<2)
+            M = "0"+M;
+        if(s.length()<2)
+            s = "0"+s;
 
-    for(int i=0;i<len;i++){
-        QString timePoint = QString("%1 %2 %3-%4-%5 %6:%7:%8").arg(QString::number(((double)noCRCCode.mid(10+i*4,2).toHex().toInt(&ok,16))/100)).arg(QString::number(((double)noCRCCode.mid(12+i*4,2).toHex().toInt(&ok,16))/100)).arg(y).arg(m).arg(d).arg(h).arg(M).arg(s);
+        QString timePoint = QString("%1 %2 %3-%4-%5 %6:%7:%8")
+                .arg(QString::number(((double)noCRCCode.mid(10+i*4,2).toHex().toInt(&ok,16))/100))
+                .arg(QString::number(((double)noCRCCode.mid(12+i*4,2).toHex().toInt(&ok,16))/100))
+                .arg(y).arg(m).arg(d).arg(h).arg(M).arg(s);
         timePointTable<<timePoint;
         second+=timeInterval;
         if(second>=60){second-=60;minute+=1;
@@ -419,7 +421,6 @@ QStringList PortAgent::Raw_Data_History(QByteArray* rec)
             if(day>28){day-=28;month+=1;}
         }if(month>12){month-=1;year+=1;}
     }
-    qDebug()<<timePointTable;
     return timePointTable;
 }
 
@@ -461,7 +462,7 @@ void PortAgent::Data_Instance(QByteArray data)
     emit readInstanceData(dataList);//把存入数据库的时间同时发给主界面
     emit fakeTimer(ORDER_READ_INSTANCE_DATA,dataList.at(2).toInt());
     emit writeCsv(s,QDir::currentPath()+"//instance//"+dataList.at(2)+".csv");
-    emit addPlotNode(dataList.at(0).toDouble(),dataList.at(1).toDouble());
+    emit addPlotNode(dataList.at(0).toDouble(),dataList.at(1).toDouble(),dataList.at(2));
 
 }
 
@@ -482,8 +483,6 @@ void PortAgent::Data_TimePoint(QByteArray data)
 void PortAgent::Data_Settings(QByteArray data)
 {
     emit deviceParameter(Raw_Data_Settings(&data));
-    emit interval(Raw_Data_Settings(&data).at(4).toInt());
-//    qDebug()<<"raw data:     -----------"<<Raw_Data_Settings(&data).at(4);
 }
 
 void PortAgent::Data_ID(QByteArray rec)

@@ -73,8 +73,8 @@ signals:
      void orders(int order,int id);
      void getInstanceBuff(QString id);
      void saveAsCsv(QStringList s,QString id);
-     void plotData(QStringList s,QString content);
-     void plotClear();
+     void plotData(QStringList s);
+     void plotClear(QString title);
 //     void itemCheckStatusChanged(QString s); //当历史数据时间组选中状态改变的时候
 
 
