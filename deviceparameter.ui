@@ -224,7 +224,7 @@
         <item>
          <widget class="QLabel" name="label_9">
           <property name="text">
-           <string>实时数据采集间隔 ms</string>
+           <string>实时数据采集间隔 s</string>
           </property>
          </widget>
         </item>

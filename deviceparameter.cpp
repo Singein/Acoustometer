@@ -13,7 +13,7 @@ DeviceParameter::DeviceParameter(QWidget *parent) :
     ui->doubleSpinBox_H->setRange(0.1,254);
     ui->spinBox_T->setRange(1,300);
     ui->spinBox_OFF->setRange(10,60);
-    ui->spinBox_instance->setRange(1,1000000);
+    ui->spinBox_instance->setRange(1,600);
     ui->label_ID->setText(QString::number(device_ID));
     setWindowModality(Qt::ApplicationModal);
     connect(ui->buttonApplay,SIGNAL(clicked()),this,SLOT(buttonApply_clicked()));
@@ -47,7 +47,7 @@ void DeviceParameter::buttonApply_clicked()
     s += QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
 
     emit DeviceParameterChanged(s);
-    emit instance_t(ui->spinBox_instance->value());
+    emit instance_t(ui->spinBox_instance->value()*1000);
     this->close();
 }
 
@@ -93,7 +93,7 @@ void DeviceParameter::initView(QStringList Settings)
         ui->spinBox_OFF->setValue(Settings.at(5).toInt());
         ui->checkBox_OFF->setChecked(true);
     }
-    ui->spinBox_instance->setValue(Agent->getT());
+    ui->spinBox_instance->setValue(Agent->getT()/1000);
 
     ui->label_time->setText(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
     ui->label_time_device->setText(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));

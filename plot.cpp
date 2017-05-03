@@ -14,7 +14,6 @@ Plot::Plot(QWidget *parent) :
     graph_f = plot_f->addGraph();
     viewInit(graph_s,plot_s,STRENGTH);
     viewInit(graph_f,plot_f,FREQUENCY);
-
     startTime = QDateTime::currentDateTime().toTime_t();
     endTime  = startTime + 30;
     connect(ui->pushButton,SIGNAL(clicked(bool)),this,SLOT(flexable()));
@@ -94,6 +93,10 @@ void Plot::addNodes(QStringList data,QString title)
         double now = QDateTime::fromString(data.at(0).split(",").at(0),"yyyy-MM-dd hh:mm:ss").toTime_t();
         endTime = QDateTime::fromString(data.at(dataCount-1).split(",").at(0),"yyyy-MM-dd hh:mm:ss").toTime_t();
         startTime = now;
+        plot_s->xAxis->setRange(startTime, endTime);
+        plot_s->yAxis->setRange(0, 250);
+        plot_f->xAxis->setRange(startTime, endTime);
+        plot_f->yAxis->setRange(0, 200);
         for(int i=0;i<dataCount;i++)
         {
             stren[i].key = QDateTime::fromString(data.at(i).split(",").at(0),"yyyy-MM-dd hh:mm:ss").toTime_t();
@@ -117,7 +120,6 @@ void Plot::flexable()
     plot_s->replot();
     plot_f->replot();
 }
-
 
 void Plot::plotShow()
 {

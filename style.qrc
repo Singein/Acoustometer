@@ -1,6 +1,5 @@
 <RCC>
     <qresource prefix="/qss">
         <file>ui.qss</file>
-        <file>ui2.qss</file>
     </qresource>
 </RCC>

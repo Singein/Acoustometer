@@ -35,7 +35,6 @@ QThread *portThread;
 public:
     explicit Widget(QWidget *parent = 0);
     ~Widget();
-//    void portConnect();
     void super_show();  //开始运行时弹出两个主窗口和串口设置窗口
     QStandardItem* get_current_item(); //用来获取当前树状列表选中的item
     QMap<QString,int> map;//每个设备的开关状态表
@@ -51,7 +50,6 @@ private:
      QAction *action_port_setting;//串口的设置菜单
      QAction *action_device_setting;//设备的参数设置菜单
      QAction *action_start_stop_All;//用来一键开启或关闭所有设备的菜单
-//     bool isAllDeviceWorking;
      Settings *portSettingDialog;//串口设置的窗口
      DeviceParameter *deviceSettingDialog;//参数设置窗口
      Plot *plotDialog;
@@ -75,7 +73,6 @@ signals:
      void getInstanceBuff(QString id);
      void saveAsCsv(QStringList s,QString id);
      void plotData(QStringList s,QString title);
-
 //     void itemCheckStatusChanged(QString s); //当历史数据时间组选中状态改变的时候
 
 

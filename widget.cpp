@@ -234,14 +234,10 @@ void Widget::viewInit()
     ui->Button_import->hide();
     ui->Button_start->hide(); 
     ui->Button_plot->hide();
-    //------------------------------------------------
-    qDebug()<<"-----------声强检测仪输出日志--------------";
-    qDebug()<<"树状列表根结点初始化成功";
-//    initTree_test();
     model->appendRow(devices);
     ui->treeView->setModel(model);
+    ui->treeView->expandAll();
     initTable();
-    qDebug()<<"界面初始化完毕";
 }
 
 QString Widget::count_time(QString time,int i)
