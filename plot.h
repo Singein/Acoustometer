@@ -2,7 +2,6 @@
 #define PLOT_H
 
 #include <QWidget>
-#include <portagent.h>
 #include <qcustomplot.h>
 #include <QVector>
 
@@ -12,7 +11,8 @@
 namespace Ui {
 class Plot;
 }
-class PortAgent;
+
+
 class Plot : public QWidget
 {
     Q_OBJECT
@@ -20,18 +20,21 @@ class Plot : public QWidget
 public:
     explicit Plot(QWidget *parent = 0);
     ~Plot();
-    void setAgent(PortAgent *agent);
+    void plotShow();
 
 private:
     Ui::Plot *ui;
-    PortAgent *Agent;
     QList<double> f;
     QList<double> s;
     QCustomPlot *plot_s;
     QCustomPlot *plot_f;
     QCPGraph *graph_s;
     QCPGraph *graph_f;
+    double startTime;
+    double endTime;
+    int dataCount;
     void viewInit(QCPGraph *graph,QCustomPlot *plot,int type);
+
 
 
 private slots:

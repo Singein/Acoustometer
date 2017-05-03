@@ -20,7 +20,6 @@ Widget::Widget(QWidget *parent) :
     portAgent = new PortAgent; //port在 get_devices_list函数中获取，先进行无参的构造是为了下面的connect函数建立
     portAgent->setMap(map_point);
     deviceSettingDialog->sentAgent(portAgent);
-    plotDialog->setAgent(portAgent);
     connect(portSettingDialog,SIGNAL(settingChanged(QSerialPort*)),this,SLOT(port_setting_changed(QSerialPort*))); //程序一运行，第一个触发的连接
     connect(portSettingDialog,SIGNAL(getCollectedDataList()),this,SLOT(get_devices_list()));//第二个触发的连接，并设置了portAgent的port参数
     connect(deviceSettingDialog,SIGNAL(DeviceParameterChanged(QString)),this,SLOT(device_setting_changed(QString)));//当任意仪器的参数发生改变时触发
@@ -110,6 +109,7 @@ void Widget::current_index_changed(QModelIndex currentIndex)
         ui->treeView->expand(ui->treeView->currentIndex());
         ui->tableWidget->clear();
         initTable();
+        int j = 0;
         for(int i=0;i<get_current_item()->rowCount();i++)
         {
             QStandardItem *currentItem = get_current_item()->child(i);
@@ -120,7 +120,13 @@ void Widget::current_index_changed(QModelIndex currentIndex)
                 }
                 portAgent->Set_timeId(currentItem->text());
                 emit orders(ORDER_UPLOAD_HISTORY_DATA,get_device_id());
+                j++;
             }
+        }
+        if(j==0)
+        {
+            QStringList s;
+            emit plotData(s,"测量仪-"+get_device_id_toString()+" 历史数据");
         }
     }
 
@@ -149,16 +155,17 @@ void Widget::current_index_changed(QModelIndex currentIndex)
             else
             {
                 get_current_item()->setCheckState(Qt::CheckState::Unchecked);
-                int i;
-                for(i=0;i<get_current_item()->parent()->rowCount();i++)
+                int j = 0;
+                for(int i=0;i<get_current_item()->parent()->rowCount();i++)
                 {
                     QStandardItem *currentItem = get_current_item()->parent()->child(i);
                     if(currentItem->checkState()==2){
+                        j++;
                         portAgent->Set_timeId(currentItem->text());
                         emit orders(ORDER_UPLOAD_HISTORY_DATA,get_device_id());
                     }
                 }
-                if(i==get_current_item()->parent()->rowCount())
+                if(j==0)
                 {
                     QStringList s;
                     emit plotData(s,"测量仪-"+get_device_id_toString()+" 历史数据");
@@ -384,7 +391,7 @@ void Widget::device_setting_Dialog_Show()
 
 void Widget::plot_dialog_show()
 {
-    plotDialog->show();
+    plotDialog->plotShow();
 }
 
 int Widget::get_device_id()
