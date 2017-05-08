@@ -92,7 +92,7 @@ private slots:
      void read_csv(QStringList s);
      void set_progressBar_value(double i);
      void plot_dialog_show();
-
+     void connectError();
      //     void start_stop_all();
      //     void read_history_data(QString s);//读取历史数据
 

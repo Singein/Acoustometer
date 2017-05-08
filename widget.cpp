@@ -33,6 +33,7 @@ Widget::Widget(QWidget *parent) :
     connect(portAgent,SIGNAL(fillTable(QStringList)),this,SLOT(fill_table_all(QStringList)));
     connect(portAgent->DS,SIGNAL(readyRead(QStringList)),this,SLOT(read_csv(QStringList)));
     connect(portAgent->DS->excel,SIGNAL(current_progress(double)),this,SLOT(set_progressBar_value(double)));
+    connect(portAgent,SIGNAL(connectError()),this,SLOT(connectError()));
     connect(this,SIGNAL(saveAsCsv(QStringList,QString)),portAgent->DS,SLOT(exportExcel(QStringList,QString)));
     connect(this,SIGNAL(orders(int,int)),portAgent,SLOT(GiveOrders(int,int)),Qt::QueuedConnection);
     connect(this,SIGNAL(getInstanceBuff(QString)),portAgent->DS,SLOT(readCsv(QString)));
@@ -55,6 +56,12 @@ void Widget::load()
 Widget::~Widget()
 {
     delete ui;
+}
+
+void Widget::connectError()
+{
+    QMessageBox::warning(this,"连接异常","与下位机连接异常，请检查与下位机的连接是否正确!");
+    this->portAgent->orderList.clear();
 }
 
 void Widget::current_index_changed(QModelIndex currentIndex)
@@ -376,6 +383,7 @@ void Widget::device_setting_changed(QString s)
 void Widget::port_setting_Dialog_Show()
 {
     portSettingDialog->show();
+    this->portAgent->isDataRecived = true;
 }
 
 void Widget::device_setting_Dialog_Show()

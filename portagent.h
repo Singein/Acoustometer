@@ -15,6 +15,7 @@
 #include <datasaver.h>
 #include <QMap>
 #include <QQueue>
+#include <QTimer>
 
 class DataSaver;
 
@@ -34,14 +35,17 @@ public:
     int  getT();
     void setMap(QMap<QString,int>* Map);
     QString timeId; //格式 170227112140
+    bool isDataRecived;
+    QQueue<QString> orderList;
+
 
 
 private:
     int T;
     QThread *thread;
+    QTimer *timer;
     QString recivedTime;
     QString settings; //存储下位机要修改的参数设置
-    QQueue<QString> orderList;
     QString Order_Get_Settings(int id);//获取当前下位机参数指令
     QString Order_Change_Settings(int id);//更改下位机参数指令
     QString Order_Get_Device_List(int id);//获取时间组列表数据
@@ -64,13 +68,10 @@ private:
     QString modIdExpand(int id);
     QString zero;
     bool ok;
-    bool isDataRecived;
+
 
     //    QString Error_Data(QByteArray* rec);
     //    QStringList *IDLIST;
-
-
-
 
 signals:
     taskFinished(int order,QString s);
@@ -82,9 +83,7 @@ signals:
     deviceParameter(QStringList settings);
     fakeTimer(int order,int id);
     send();
-
-
-
+    connectError();
 
 public slots:
     void GiveOrders(int order,int id);
@@ -92,6 +91,7 @@ public slots:
     void fakeTimerSlot(int order,int id);
     void SendOrders();
     void setT(int t);
+    void connectionError();
 };
 
 #endif // PORTAGENT_H

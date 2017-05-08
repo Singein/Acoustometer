@@ -13,6 +13,9 @@ PortAgent::PortAgent()
     thread = new QThread;
     this->moveToThread(thread);
     thread->start();
+    timer = new QTimer;
+    timer->moveToThread(thread);
+    connect(timer,SIGNAL(timeout()),this,SLOT(connectionError()));
 }
 
 void PortAgent::setPort(QSerialPort *p)
@@ -87,6 +90,7 @@ void PortAgent::SendOrders()
             QByteArray order = QByteArray::fromHex(s.toLatin1().data());
             port->write(order,order.length());
             isDataRecived = false;
+            timer->start(5000);
         }
 }
 
@@ -132,7 +136,9 @@ void PortAgent::OrderExcuted()
         crc = data.mid(len-2,2).toHex().toUpper();
         crcCheck = crcg->crcChecksix(data.mid(0,len-2).toHex());
     }
-    qDebug()<<"data recived --> "<<data.toHex()<<"\ndata length: "<<data.length()<<" bytes";
+    qDebug()<<"data recived --> "<<data.toHex()<<"\ndata length: "<<data.length()<<" bytes"<<" time:"<<timer->remainingTime();
+
+
 //    if(crc == crcCheck)
 //    {
         switch(Flag)
@@ -148,7 +154,10 @@ void PortAgent::OrderExcuted()
         }
 //    }
     if(data.length()!=0)
+    {
         isDataRecived = true;
+        timer->stop();
+    }
     emit send();
 }
 
@@ -164,6 +173,11 @@ void PortAgent::fakeTimerSlot(int order,int id)
      }
 }
 
+void PortAgent::connectionError()
+{
+    timer->stop();
+    emit connectError();
+}
 
 //--------------------以下是封装的命令-----------------------------
 /*16进制字符补足长度*/
