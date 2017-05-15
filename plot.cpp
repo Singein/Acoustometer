@@ -6,14 +6,8 @@ Plot::Plot(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Plot)
 {
-    ui->setupUi(this);
-    ui->pushButton->setMaximumHeight(30);
-    plot_s = ui->widget_s;
-    plot_f = ui->widget_f;
-    graph_s = plot_s->addGraph();
-    graph_f = plot_s->addGraph();
-    viewInit(graph_s,plot_s,STRENGTH);
-    viewInit(graph_f,plot_f,FREQUENCY);
+    ui->setupUi(this); 
+    viewInit();
     startTime = QDateTime::currentDateTime().toTime_t();
     endTime  = startTime + 30;
     connect(ui->pushButton,SIGNAL(clicked(bool)),this,SLOT(flexable()));
@@ -24,20 +18,16 @@ Plot::~Plot()
     delete ui;
 }
 
-void Plot::viewInit(QCPGraph *graph,QCustomPlot *plot,int type)
+void Plot::graphInit(QCPGraph *graph,QCustomPlot *plot,int type)
 {
 //    graph->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, QPen(Qt::black, 1.5), QBrush(Qt::white), 9));
-    if(type == 0){
-        plot->yAxis->setLabel("声强(W/cm²)");
-        plot->yAxis->setRange(0,250);
+    if(type == 0)
         graph->setPen(QPen(QColor(255, 0, 120), 2));
-    }
-    else{
-        plot->yAxis->setLabel("频率(KHz)");
-        plot->yAxis->setRange(0,200);
+    else
         graph->setPen(QPen(QColor(180, 0, 255), 2));
-    }
 
+
+    plot->yAxis->setRange(0,250);
     plot->addLayer("abovemain", plot->layer("main"), QCustomPlot::limAbove);
     plot->addLayer("belowmain", plot->layer("main"), QCustomPlot::limBelow);
     graph->setLayer("abovemain");
@@ -82,6 +72,20 @@ void Plot::viewInit(QCPGraph *graph,QCustomPlot *plot,int type)
     plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
 }
 
+void Plot::viewInit()
+{
+    ui->pushButton->setMaximumHeight(30);
+    plot = ui->widget_s;
+    graph_s = plot->addGraph();
+    graphInit(graph_s,plot,STRENGTH);
+    plot->graph(0)->setName("声强(W/cm²)");
+    graph_f = plot->addGraph();
+    graphInit(graph_f,plot,FREQUENCY);
+    plot->graph(1)->setName("频率(KHz)");
+    plot->legend->setVisible(true);
+    plot->legend->setBrush(QBrush(QColor(255,255,255,150)));
+}
+
 void Plot::addNodes(QStringList data,QString title)
 {
     this->setWindowTitle(title);
@@ -93,37 +97,29 @@ void Plot::addNodes(QStringList data,QString title)
         double now = QDateTime::fromString(data.at(0).split(",").at(0),"yyyy-MM-dd hh:mm:ss").toTime_t();
         endTime = QDateTime::fromString(data.at(dataCount-1).split(",").at(0),"yyyy-MM-dd hh:mm:ss").toTime_t();
         startTime = now;
-        plot_s->xAxis->setRange(startTime, endTime+10);
-//        plot_s->yAxis->setRange(0, 250);
-        plot_f->xAxis->setRange(startTime, endTime+10);
-//        plot_f->yAxis->setRange(0, 200);
+        plot->xAxis->setRange(startTime, endTime+10);
         for(int i=0;i<dataCount;i++)
         {
             stren[i].key = QDateTime::fromString(data.at(i).split(",").at(0),"yyyy-MM-dd hh:mm:ss").toTime_t();
             frequ[i].key = QDateTime::fromString(data.at(i).split(",").at(0),"yyyy-MM-dd hh:mm:ss").toTime_t();
-            stren[i].value = data.at(i).split(",").at(1).toDouble()+10;
+            stren[i].value = data.at(i).split(",").at(1).toDouble();
             frequ[i].value = data.at(i).split(",").at(2).toDouble();
         }
     }
     graph_s->data()->set(stren);
     graph_f->data()->set(frequ);
-    plot_s->replot();
-    plot_f->replot();
+    plot->replot();
 }
 
 void Plot::flexable()
 {
-    plot_s->xAxis->setRange(startTime, endTime);
-    plot_s->yAxis->setRange(0, 250);
-    plot_f->xAxis->setRange(startTime, endTime);
-    plot_f->yAxis->setRange(0, 200);
-    plot_s->replot();
-    plot_f->replot();
+    plot->xAxis->setRange(startTime, endTime);
+    plot->yAxis->setRange(0, 250);
+    plot->replot();
 }
 
 void Plot::plotShow()
 {
-    plot_s->xAxis->setRange(startTime, endTime);
-    plot_f->xAxis->setRange(startTime, endTime);
+    plot->xAxis->setRange(startTime, endTime);
     this->show();
 }

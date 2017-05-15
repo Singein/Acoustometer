@@ -26,14 +26,15 @@ private:
     Ui::Plot *ui;
     QList<double> f;
     QList<double> s;
-    QCustomPlot *plot_s;
-    QCustomPlot *plot_f;
+    QCustomPlot *plot;
+//    QCustomPlot *plot_f;
     QCPGraph *graph_s;
     QCPGraph *graph_f;
     double startTime;
     double endTime;
     int dataCount;
-    void viewInit(QCPGraph *graph,QCustomPlot *plot,int type);
+    void graphInit(QCPGraph *graph,QCustomPlot *plot,int type);
+    void viewInit();
 
 
 
