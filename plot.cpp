@@ -11,7 +11,7 @@ Plot::Plot(QWidget *parent) :
     plot_s = ui->widget_s;
     plot_f = ui->widget_f;
     graph_s = plot_s->addGraph();
-    graph_f = plot_f->addGraph();
+    graph_f = plot_s->addGraph();
     viewInit(graph_s,plot_s,STRENGTH);
     viewInit(graph_f,plot_f,FREQUENCY);
     startTime = QDateTime::currentDateTime().toTime_t();
@@ -93,15 +93,15 @@ void Plot::addNodes(QStringList data,QString title)
         double now = QDateTime::fromString(data.at(0).split(",").at(0),"yyyy-MM-dd hh:mm:ss").toTime_t();
         endTime = QDateTime::fromString(data.at(dataCount-1).split(",").at(0),"yyyy-MM-dd hh:mm:ss").toTime_t();
         startTime = now;
-        plot_s->xAxis->setRange(startTime, endTime);
-        plot_s->yAxis->setRange(0, 250);
-        plot_f->xAxis->setRange(startTime, endTime);
-        plot_f->yAxis->setRange(0, 200);
+        plot_s->xAxis->setRange(startTime, endTime+10);
+//        plot_s->yAxis->setRange(0, 250);
+        plot_f->xAxis->setRange(startTime, endTime+10);
+//        plot_f->yAxis->setRange(0, 200);
         for(int i=0;i<dataCount;i++)
         {
             stren[i].key = QDateTime::fromString(data.at(i).split(",").at(0),"yyyy-MM-dd hh:mm:ss").toTime_t();
             frequ[i].key = QDateTime::fromString(data.at(i).split(",").at(0),"yyyy-MM-dd hh:mm:ss").toTime_t();
-            stren[i].value = data.at(i).split(",").at(1).toDouble();
+            stren[i].value = data.at(i).split(",").at(1).toDouble()+10;
             frequ[i].value = data.at(i).split(",").at(2).toDouble();
         }
     }

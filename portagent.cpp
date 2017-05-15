@@ -109,33 +109,33 @@ void PortAgent::OrderExcuted()
     QString crcCheck = crcg->crcChecksix(data.mid(0,len-2).toHex());
 
     int Flag = data.mid(1,1).toHex().toInt(&ok,16);
-    if(crc!=crcCheck){
-        switch (Flag) {
-        case 3:
-            while(len<9){
-                data.append(port->readAll());
-                len = data.length();
-            }
-            break;
-        case 65:
-            while((len-4)%7!=0){
-                data.append(port->readAll());
-                len = data.length();
-            }
-            break;
-        case 66:
-            while((len-12)%4!=0){
-                data.append(port->readAll());
-                len = data.length();
-            }
-            break;
-        default:
-            break;
-        }
+//    if(crc!=crcCheck){
+//        switch (Flag) {
+//        case 3:
+//            while(len<9){
+//                data.append(port->readAll());
+//                len = data.length();
+//            }
+//            break;
+//        case 65:
+//            while((len-4)%7!=0){
+//                data.append(port->readAll());
+//                len = data.length();
+//            }
+//            break;
+//        case 66:
+//            while((len-12)%4!=0){
+//                data.append(port->readAll());
+//                len = data.length();
+//            }
+//            break;
+//        default:
+//            break;
+//        }
 
-        crc = data.mid(len-2,2).toHex().toUpper();
-        crcCheck = crcg->crcChecksix(data.mid(0,len-2).toHex());
-    }
+//        crc = data.mid(len-2,2).toHex().toUpper();
+//        crcCheck = crcg->crcChecksix(data.mid(0,len-2).toHex());
+//    }
     qDebug()<<"data recived --> "<<data.toHex()<<"\ndata length: "<<data.length()<<" bytes"<<" time:"<<timer->remainingTime();
 
 

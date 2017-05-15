@@ -344,6 +344,9 @@ void Widget::on_treeView_customContextMenuRequested(const QPoint &pos)
 //    connect(action_start_stop_All,SIGNAL(triggered(bool)),this,SLOT(start_stop_all()));
     if(currentItem->text() == "设备列表")
     {
+        ui->Button_import->hide();
+        ui->Button_start->hide();
+        ui->Button_plot->hide();
         QMenu *popMenu =new QMenu(this);//定义一个右键弹出菜单
 //        if(!isAllDeviceWorking)
 //        {
@@ -362,6 +365,9 @@ void Widget::on_treeView_customContextMenuRequested(const QPoint &pos)
 
     if(currentItem->text().contains("测量仪"))
     {
+        ui->Button_import->hide();
+        ui->Button_start->hide();
+        ui->Button_plot->hide();
         QMenu *popMenu =new QMenu(this);//定义一个右键弹出菜单
         popMenu->addAction(action_device_setting);//往菜单内添加QAction
         popMenu->exec(QCursor::pos());//弹出右键菜单，菜单位置为光标位置
@@ -441,7 +447,6 @@ void Widget::start_and_stop_collecting()
         ui->Button_import->setEnabled(true);
         get_current_item()->setText("实时数据");
         emit orders(ORDER_STOP_COLLECTING,get_device_id());
-
     }
 }
 

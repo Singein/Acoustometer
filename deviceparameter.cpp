@@ -10,7 +10,7 @@ DeviceParameter::DeviceParameter(QWidget *parent) :
     this->setMaximumSize(635,335);
     this->setMinimumSize(635,335);
     ui->spinBox_K->setRange(1,1000);
-    ui->doubleSpinBox_H->setRange(0.1,254);
+    ui->doubleSpinBox_H->setRange(0,99.99);
     ui->spinBox_T->setRange(1,300);
     ui->spinBox_OFF->setRange(10,60);
     ui->spinBox_instance->setRange(1,600);
