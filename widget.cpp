@@ -9,7 +9,7 @@ Widget::Widget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Widget)
 {
-    qDebug()<<"当前线程ID:"<<QThread::currentThreadId();
+//    qDebug()<<"当前线程ID:"<<QThread::currentThreadId();
     ui->setupUi(this);
     map_point = &map;
     viewInit();
@@ -60,7 +60,7 @@ Widget::~Widget()
 
 void Widget::connectError()
 {
-    QMessageBox::warning(this,"连接异常","与下位机连接异常，请检查与下位机的连接是否正确!");
+    QMessageBox::warning(this,"连接异常","与下位机连接异常，请检查与下位机的连接是否正确!"); //A,B
     this->portAgent->orderList.clear();
 }
 
@@ -69,24 +69,24 @@ void Widget::current_index_changed(QModelIndex currentIndex)
     QStandardItem *currentItem = model->itemFromIndex(currentIndex);
     QString s = currentItem->text();
     isInstance = false;
-    if(s == "设备列表")
+    if(s == "设备列表") //C
     {
         ui->Button_import->hide();
         ui->Button_start->hide();
         ui->Button_plot->hide();
-        ui->label->setText("已连接设备数: "+QString::number(devices->rowCount()));
+        ui->label->setText("已连接设备数: "+QString::number(devices->rowCount())); //D
     }
-    if(s.contains("测量仪"))
+    if(s.contains("测量仪"))//E
     {
         ui->Button_import->hide();
         ui->Button_start->hide();
         ui->Button_plot->hide();
-        ui->label->setText("当前选中: "+s);
+        ui->label->setText("当前选中: "+s);//F
         ui->treeView->expand(ui->treeView->currentIndex());
     }
-    if(s.contains("实时数据"))
+    if(s.contains("实时数据"))//G
     {
-        ui->label->setText("表格内容: 测量仪"+get_device_id_toString()+" 实时数据");
+        ui->label->setText("表格内容: 测量仪"+get_device_id_toString()+" 实时数据");//HG
         ui->Button_import->show();
         ui->Button_start->show();
         ui->Button_plot->show();
@@ -95,20 +95,20 @@ void Widget::current_index_changed(QModelIndex currentIndex)
         emit getInstanceBuff(QDir::currentPath()+"//instance//"+get_device_id_toString()+".csv");
 
         isInstance = true;
-        if(s.contains("正在采集"))
+        if(s.contains("正在采集")) //I
         {
-            ui->Button_start->setText("停止采集");
+            ui->Button_start->setText("停止采集");//J
             ui->Button_import->setEnabled(false);
         }
         else
         {
-            ui->Button_start->setText("开始采集");
+            ui->Button_start->setText("开始采集");//K
             ui->Button_import->setEnabled(true);
         }
     }
-    if(s == "历史数据")
+    if(s == "历史数据")//L
     {
-        ui->label->setText("表格内容: 测量仪"+get_device_id_toString()+" 历史数据");
+        ui->label->setText("表格内容: 测量仪"+get_device_id_toString()+" 历史数据");//HL
         ui->Button_start->hide();
         ui->Button_import->show();
         ui->Button_plot->show();
@@ -122,7 +122,7 @@ void Widget::current_index_changed(QModelIndex currentIndex)
             QStandardItem *currentItem = get_current_item()->child(i);
             if(currentItem->checkState()==2){
                 if(isInstanceDataCollecting()){
-                    QMessageBox::warning(this,"Warning","请先停止正在进行的实时数据采集！");
+                    QMessageBox::warning(this,"Warning","请先停止正在进行的实时数据采集！");//M
                     return;
                 }
                 portAgent->Set_timeId(currentItem->text());
@@ -133,7 +133,7 @@ void Widget::current_index_changed(QModelIndex currentIndex)
         if(j==0)
         {
             QStringList s;
-            emit plotData(s,"测量仪-"+get_device_id_toString()+" 历史数据");
+            emit plotData(s,"测量仪-"+get_device_id_toString()+" 历史数据");//NL
         }
     }
 
@@ -143,7 +143,7 @@ void Widget::current_index_changed(QModelIndex currentIndex)
         ui->Button_import->show();
         ui->Button_plot->show();
         if(isInstanceDataCollecting())
-            QMessageBox::warning(this,"Warning","请先停止正在进行的实时数据采集！");
+            QMessageBox::warning(this,"Warning","请先停止正在进行的实时数据采集！");//O
         else{
             ui->tableWidget->clear();
             initTable();
@@ -175,7 +175,7 @@ void Widget::current_index_changed(QModelIndex currentIndex)
                 if(j==0)
                 {
                     QStringList s;
-                    emit plotData(s,"测量仪-"+get_device_id_toString()+" 历史数据");
+                    emit plotData(s,"测量仪-"+get_device_id_toString()+" 历史数据");//NL
                 }
             }
 
@@ -190,10 +190,10 @@ void Widget::initTree(QStringList nodes)
             break;
     if((index==devices->rowCount()-1&&index!=0)||devices->rowCount()==0)
     {
-        QStandardItem *device = new QStandardItem("测量仪 "+nodes.at(0)); //这条是id，设备
+        QStandardItem *device = new QStandardItem("测量仪 "+nodes.at(0)); //E
         map.insert(nodes.at(0),0);
-        QStandardItem *instance_data = new QStandardItem("实时数据");
-        QStandardItem *history_data = new QStandardItem("历史数据");
+        QStandardItem *instance_data = new QStandardItem("实时数据");//G
+        QStandardItem *history_data = new QStandardItem("历史数据");//L
         device->setEditable(false);
         instance_data->setEditable(false);
         history_data->setEditable(false);
@@ -216,7 +216,7 @@ void Widget::initTable()
 {
     ui->tableWidget->setColumnCount(3);
     QStringList tableHeader;
-    tableHeader <<"日期/时间"<<"声强值(W/cm²)"<<"频率(KHz)";
+    tableHeader <<"日期/时间"<<"声强值(W/cm²)"<<"频率(KHz)"; //P Q R
     ui->tableWidget->setHorizontalHeaderLabels(tableHeader);
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->tableWidget->verticalHeader()->setVisible(false);
@@ -224,19 +224,18 @@ void Widget::initTable()
     ui->tableWidget->horizontalHeader()->setSectionsMovable(true);
     ui->tableWidget->horizontalHeader()->setHighlightSections(false);
     RowCount = 1;
-    qDebug()<<"表格初始化成功";
 }
 
 void Widget::viewInit()
 {  
-    this->setWindowTitle("声强检测仪");
+    this->setWindowTitle("声强检测仪"); // S
     ui->progressBar->hide();
     ui->progressBar->setRange(0,100);
     ui->progressBar->setValue(0);
     load();
     model = new QStandardItemModel (ui->treeView);
     ui->treeView->setMaximumWidth(250);
-    devices = new QStandardItem("设备列表");
+    devices = new QStandardItem("设备列表"); //C
     devices->setEditable(false);
     ui->Button_import->hide();
     ui->Button_start->hide(); 
@@ -266,7 +265,7 @@ void Widget::fill_table_all(QStringList s)
         items<<s.at(i).split(" ").at(2)+" "+s.at(i).split(" ").at(3);
         add_table_row(items);
     }
-    emit plotData(getTableData(),"测量仪-"+get_device_id_toString()+" 历史数据");
+    emit plotData(getTableData(),"测量仪-"+get_device_id_toString()+" 历史数据"); //
 }
 
 void Widget::read_csv(QStringList s)

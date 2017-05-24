@@ -22,7 +22,8 @@ SOURCES += main.cpp\
     datasaver.cpp \
     excel.cpp \
     qcustomplot.cpp \
-    plot.cpp
+    plot.cpp \
+    lang.cpp
 
 HEADERS  += widget.h \
     portagent.h \
@@ -33,7 +34,8 @@ HEADERS  += widget.h \
     datasaver.h \
     excel.h \
     qcustomplot.h \
-    plot.h
+    plot.h \
+    lang.h
 
 FORMS    += widget.ui \
     settings.ui \
@@ -48,3 +50,4 @@ RESOURCES += \
     style.qrc
 
 RC_ICONS = myapp.ico
+TRANSLATIONS = app.ts
