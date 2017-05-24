@@ -34,7 +34,9 @@ public:
     QString tableTitleStrength; // 声强    Acoustical Strength
     QString tableTitleFrequency;// 频率    Frequency
 
-    QString selection(int id);//当前选中:测量仪 1 selection: device 1
+    QString exporting;
+
+    QString selection;//当前选中:测量仪 1 selection: device 1
     QString formContent(int id,int type);//表格内容:测量仪 1 实时数据/历史数据  form content: device 1 realtime data
     QString connectedDevices(int count);//已连接设备数:1  the number of connected devices:2
 

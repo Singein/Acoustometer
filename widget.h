@@ -19,7 +19,7 @@
 #include <deviceparameter.h>
 #include <QMap>
 #include <plot.h>
-
+#include <lang.h>
 
 namespace Ui {
 class Widget;
@@ -40,8 +40,7 @@ public:
     QMap<QString,int> map;//每个设备的开关状态表
     QMap<QString,int> *map_point;//上面的变量的指针，用来向portagent传参
     PortAgent *portAgent;//很关键精髓的角色，与下位机的交互全部靠这个
-
-
+    void setLanguage(int languageType);
 
 private:
     Ui::Widget *ui;
@@ -66,7 +65,8 @@ private:
      QString count_time(QString time,int i);
      QStringList getTableData();
      bool isInstanceDataCollecting();
-
+     int languageType;
+     LANG *language;
 
 signals:
      void orders(int order,int id);

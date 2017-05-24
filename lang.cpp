@@ -3,6 +3,7 @@
 LANG::LANG(int languageType)
 {
     this->languageType = languageType;
+    init();
 }
 
 void LANG::init()
@@ -26,8 +27,10 @@ void LANG::init()
         buttonStop = "停止采集";//停止采集 Stop
         buttonExport = "导出";//导出 Export
         tableTitleDateTime = "日期/时间";// 日期/时间  DateTime
-        tableTitleStrength = "声强"; // 声强    Acoustical Strength
-        tableTitleFrequency = "频率";// 频率    Frequency
+        tableTitleStrength = "声强(W/cm²)"; // 声强    Acoustical Strength
+        tableTitleFrequency = "频率(KHz)";// 频率    Frequency
+        exporting = "正在导出数据...";
+        selection = "当前选中: ";
         break;
     case ENGLISH:
         applicationTitle = "Acoustometer";
@@ -47,29 +50,31 @@ void LANG::init()
         buttonStop = "Stop";//停止采集 Stop
         buttonExport = "Export";//导出 Export
         tableTitleDateTime = "DateTime";// 日期/时间  DateTime
-        tableTitleStrength = "DateTime"; // 声强    Acoustical Strength
-        tableTitleFrequency = "Frequency";// 频率    Frequency
+        tableTitleStrength = "Acoustical Strength(W/cm²)"; // 声强    Acoustical Strength
+        tableTitleFrequency = "Frequency(KHz)";// 频率    Frequency
+        exporting = "exporting...";
+        selection = "selection: ";
         break;
     default:
         break;
     }
 }
 
-QString LANG::selection(int id)
-{
-    QString s = "";
-    switch (languageType) {
-    case CHINESE:
-        s += "当前选中:测量仪 " + QString::number(id);
-        break;
-    case ENGLISH:
-        s += "selection: device " + QString::number(id);
-        break;
-    default:
-        break;
-    }
-    return s;
-}
+//QString LANG::selection(int id)
+//{
+//    QString s = "";
+//    switch (languageType) {
+//    case CHINESE:
+//        s += "当前选中:测量仪 " + QString::number(id);
+//        break;
+//    case ENGLISH:
+//        s += "selection: device " + QString::number(id);
+//        break;
+//    default:
+//        break;
+//    }
+//    return s;
+//}
 
 QString LANG::formContent(int id, int type)
 {
