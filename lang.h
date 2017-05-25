@@ -14,6 +14,7 @@ public:
     QString deviceSetting;//仪器设置 Device Settings
     QString portSetting;//串口设置  Serial Settings
 
+
     QString deviceList;//设备列表   Device List
     QString device; //测量仪 Device
     QString realTimeData;//实时数据  realtime data
@@ -29,6 +30,9 @@ public:
     QString buttonStart;//开始采集 Start
     QString buttonStop;//停止采集 Stop
     QString buttonExport;//导出 Export
+    QString buttonConnect;
+    QString buttonDisConnect;
+
 
     QString tableTitleDateTime;// 日期/时间  DateTime
     QString tableTitleStrength; // 声强    Acoustical Strength

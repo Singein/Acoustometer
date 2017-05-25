@@ -7,11 +7,11 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    QTranslator *ts = new QTranslator;
-    ts->load(QDir::currentPath()+"/app.qm");
-    a.installTranslator(ts);
+//    QTranslator *ts = new QTranslator;
+//    ts->load(QDir::currentPath()+"/app.qm");
+//    a.installTranslator(ts);
     Widget w;
-//    w.setLanguage(1);
+
     w.super_show();
     return a.exec();
 }

@@ -6,8 +6,7 @@ Plot::Plot(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Plot)
 {
-    ui->setupUi(this); 
-    viewInit();
+    ui->setupUi(this);     
     startTime = QDateTime::currentDateTime().toTime_t();
     endTime  = startTime + 30;
     connect(ui->pushButton,SIGNAL(clicked(bool)),this,SLOT(flexable()));
@@ -16,6 +15,12 @@ Plot::Plot(QWidget *parent) :
 Plot::~Plot()
 {
     delete ui;
+}
+
+void Plot::setLanguage(LANG *language)
+{
+    this->language = language;
+    viewInit();
 }
 
 void Plot::graphInit(QCPGraph *graph,QCustomPlot *plot,int type)
@@ -78,10 +83,10 @@ void Plot::viewInit()
     plot = ui->widget_s;
     graph_s = plot->addGraph();
     graphInit(graph_s,plot,STRENGTH);
-    plot->graph(0)->setName("声强(W/cm²)");
+    plot->graph(0)->setName(language->tableTitleStrength);
     graph_f = plot->addGraph();
     graphInit(graph_f,plot,FREQUENCY);
-    plot->graph(1)->setName("频率(KHz)");
+    plot->graph(1)->setName(language->tableTitleFrequency);
     plot->legend->setVisible(true);
     plot->legend->setBrush(QBrush(QColor(255,255,255,150)));
 }

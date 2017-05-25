@@ -38,7 +38,7 @@
      <item row="0" column="1">
       <widget class="QPushButton" name="pushButton">
        <property name="text">
-        <string>FLEXABLE</string>
+        <string>Flexable</string>
        </property>
       </widget>
      </item>

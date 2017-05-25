@@ -11,13 +11,16 @@ Widget::Widget(QWidget *parent) :
 {
     ui->setupUi(this);
     this->languageType = 1;
-    language = new LANG(1);
+    language = new LANG(0);
     map_point = &map;
     viewInit();
     portSettingDialog = new Settings;
+    portSettingDialog->setLanguage(language);
     portThread = new QThread;
     deviceSettingDialog = new DeviceParameter;
+    deviceSettingDialog->setLanguage(language);
     plotDialog = new Plot;
+    plotDialog->setLanguage(language);
     portAgent = new PortAgent; //port在 get_devices_list函数中获取，先进行无参的构造是为了下面的connect函数建立
     portAgent->setMap(map_point);
     deviceSettingDialog->sentAgent(portAgent);
@@ -37,6 +40,7 @@ Widget::Widget(QWidget *parent) :
     connect(portAgent,SIGNAL(connectError()),this,SLOT(connectError()));
     connect(this,SIGNAL(saveAsCsv(QStringList,QString)),portAgent->DS,SLOT(exportExcel(QStringList,QString)));
     connect(this,SIGNAL(orders(int,int)),portAgent,SLOT(GiveOrders(int,int)),Qt::QueuedConnection);
+    connect(this,SIGNAL(orders(int,QString)),portAgent,SLOT(GiveOrders(int,QString)),Qt::QueuedConnection);
     connect(this,SIGNAL(getInstanceBuff(QString)),portAgent->DS,SLOT(readCsv(QString)));
     connect(this,SIGNAL(plotData(QStringList,QString)),this->plotDialog,SLOT(addNodes(QStringList,QString)));
 }
@@ -67,7 +71,7 @@ Widget::~Widget()
 
 void Widget::connectError()
 {
-    QMessageBox::warning(this,"连接异常","与下位机连接异常，请检查与下位机的连接是否正确!");
+    QMessageBox::warning(this,language->connectError,language->connectErrorInfo);
     this->portAgent->orderList.clear();
 }
 
@@ -132,8 +136,7 @@ void Widget::current_index_changed(QModelIndex currentIndex)
                     QMessageBox::warning(this,language->warring,language->warringInfo);
                     return;
                 }
-                portAgent->Set_timeId(currentItem->text());
-                emit orders(ORDER_UPLOAD_HISTORY_DATA,get_device_id());
+                emit orders(get_device_id(),currentItem->text());
                 j++;
             }
         }
@@ -161,8 +164,7 @@ void Widget::current_index_changed(QModelIndex currentIndex)
                 {
                     QStandardItem *currentItem = get_current_item()->parent()->child(i);
                     if(currentItem->checkState()==2){
-                        portAgent->Set_timeId(currentItem->text());
-                        emit orders(ORDER_UPLOAD_HISTORY_DATA,get_device_id());
+                        emit orders(get_device_id(),currentItem->text());
                     }
                 }
             }
@@ -175,8 +177,7 @@ void Widget::current_index_changed(QModelIndex currentIndex)
                     QStandardItem *currentItem = get_current_item()->parent()->child(i);
                     if(currentItem->checkState()==2){
                         j++;
-                        portAgent->Set_timeId(currentItem->text());
-                        emit orders(ORDER_UPLOAD_HISTORY_DATA,get_device_id());
+                        emit orders(get_device_id(),currentItem->text());
                     }
                 }
                 if(j==0)
@@ -226,6 +227,8 @@ void Widget::initTable()
     tableHeader <<language->tableTitleDateTime<<language->tableTitleStrength<<language->tableTitleFrequency;
     ui->tableWidget->setHorizontalHeaderLabels(tableHeader);
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tableWidget->setShowGrid(false);
+    ui->tableWidget->setSelectionMode(QAbstractItemView::NoSelection);
     ui->tableWidget->verticalHeader()->setVisible(false);
     ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     ui->tableWidget->horizontalHeader()->setSectionsMovable(true);
@@ -415,7 +418,7 @@ int Widget::get_device_id()
     QStandardItem *currentItem = get_current_item();
     int index = 0;
     QString s = currentItem->text();
-    if(s.contains(currentItem->text().contains(language->device)&&!currentItem->text().contains(language->deviceList)));
+    if(currentItem->text().contains(language->device)&&!currentItem->text().contains(language->deviceList));
     else
         s = currentItem->parent()->text();
     if(s == language->historyData|| s == language->realTimeData)

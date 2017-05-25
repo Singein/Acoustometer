@@ -6,7 +6,7 @@ DeviceParameter::DeviceParameter(QWidget *parent) :
     ui(new Ui::DeviceParameter)
 {
     ui->setupUi(this);
-    this->setWindowTitle("仪器参数设置");
+
     this->setMaximumSize(635,335);
     this->setMinimumSize(635,335);
     ui->spinBox_K->setRange(1,1000);
@@ -23,6 +23,12 @@ DeviceParameter::DeviceParameter(QWidget *parent) :
 DeviceParameter::~DeviceParameter()
 {
     delete ui;
+}
+
+void DeviceParameter::setLanguage(LANG *language)
+{
+    this->language = language;
+    this->setWindowTitle(this->language->deviceSetting);
 }
 
 void DeviceParameter::buttonApply_clicked()
@@ -100,4 +106,3 @@ void DeviceParameter::initView(QStringList Settings)
 
 }
 
-//还有一件事-----------------设置关闭窗口的ignore处理

@@ -5,6 +5,7 @@
 #include <QSerialPortInfo>
 #include <QSerialPort>
 #include <QMessageBox>
+#include <lang.h>
 
 namespace Ui {
 class Settings;
@@ -18,6 +19,7 @@ public:
     explicit Settings(QWidget *parent = 0);
     ~Settings();
     void PortScan();
+    void setLanguage(LANG *language);
 
 
 signals:
@@ -28,6 +30,7 @@ private:
     QString setting;
     QSerialPort *port;
     bool serialStatus;
+    LANG *language;
 private slots:
     void returnPort();
     void cancel();

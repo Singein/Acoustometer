@@ -26,6 +26,8 @@ void LANG::init()
         buttonStart = "开始采集";//开始采集 Start
         buttonStop = "停止采集";//停止采集 Stop
         buttonExport = "导出";//导出 Export
+        buttonConnect = "连接串口";
+        buttonDisConnect = "断开连接";
         tableTitleDateTime = "日期/时间";// 日期/时间  DateTime
         tableTitleStrength = "声强(W/cm²)"; // 声强    Acoustical Strength
         tableTitleFrequency = "频率(KHz)";// 频率    Frequency
@@ -49,6 +51,8 @@ void LANG::init()
         buttonStart = "Start";//开始采集 Start
         buttonStop = "Stop";//停止采集 Stop
         buttonExport = "Export";//导出 Export
+        buttonConnect = "Connect";
+        buttonDisConnect = "Disconnect";
         tableTitleDateTime = "DateTime";// 日期/时间  DateTime
         tableTitleStrength = "Acoustical Strength(W/cm²)"; // 声强    Acoustical Strength
         tableTitleFrequency = "Frequency(KHz)";// 频率    Frequency

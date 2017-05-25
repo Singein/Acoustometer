@@ -33,12 +33,6 @@ void PortAgent::Set_Settings(QString Settings)
     this->settings = Settings;
 }
 
-void PortAgent::Set_timeId(QString TimeId)
-{
-    QThread::msleep(1);
-    this->timeId = TimeId;
-}
-
 void PortAgent::setT(int t)
 {
     this->T = t;
@@ -52,7 +46,6 @@ int PortAgent::getT()
 void PortAgent::setMap(QMap<QString, int> *Map)
 {
     this->map = Map;
-    qDebug()<<"开关表映射 已建立";
 }
 
 PortAgent::~PortAgent()
@@ -64,7 +57,7 @@ void PortAgent::GiveOrders(int order,int id)
 {
     switch (order) {
     case ORDER_GET_DEVICE_LIST:orderList.enqueue(Order_Get_Device_List(id));break;
-    case ORDER_UPLOAD_HISTORY_DATA:orderList.enqueue(Order_Upload_History_Data(id));break;
+//    case ORDER_UPLOAD_HISTORY_DATA:orderList.enqueue(Order_Upload_History_Data(id));break;
     case ORDER_START_COLLECTING:Order_Start_Read_Instance(id);break;
     case ORDER_STOP_COLLECTING:Order_Stop_Read_Instance(id);break;
     case ORDER_CHANGE_SETTINGS:orderList.enqueue(Order_Change_Settings(id));break;
@@ -72,13 +65,13 @@ void PortAgent::GiveOrders(int order,int id)
     case ORDER_READ_INSTANCE_DATA:orderList.enqueue(Order_Read_Instance_Data(id));break;
     default:break;
     }
+    emit send();
+}
 
-//    if(orderList.length()==rowcount)
-//    {
-//        qDebug()<<orderList;
-        emit send();
-//        rowcount = 1;
-//    }
+void PortAgent::GiveOrders(int id, QString time)
+{
+    orderList.enqueue(Order_Upload_History_Data(id,time));
+    emit send();
 }
 
 void PortAgent::SendOrders()
@@ -136,11 +129,11 @@ void PortAgent::OrderExcuted()
 //        crc = data.mid(len-2,2).toHex().toUpper();
 //        crcCheck = crcg->crcChecksix(data.mid(0,len-2).toHex());
 //    }
-    qDebug()<<"data recived --> "<<data.toHex()<<"\ndata length: "<<data.length()<<" bytes"<<" time:"<<timer->remainingTime();
 
 
-//    if(crc == crcCheck)
-//    {
+    if(data.length()!=0)
+    {
+        qDebug()<<"data recived --> "<<data.toHex()<<"\ndata length: "<<data.length()<<" bytes"<<" time:"<<timer->remainingTime();
         switch(Flag)
         {
             case 2: Data_ID(data);
@@ -152,9 +145,6 @@ void PortAgent::OrderExcuted()
             case 66: Data_History(data);break;
 
         }
-//    }
-    if(data.length()!=0)
-    {
         isDataRecived = true;
         timer->stop();
     }
@@ -296,13 +286,13 @@ QString PortAgent::Order_Get_Time_Point(int id){
     return readTimePointRequest;
 }
 
-QString PortAgent::Order_Upload_History_Data(int id)
+QString PortAgent::Order_Upload_History_Data(int id,QString timeId)
 {
     CrcCheck *crc = new CrcCheck();
     QString UploadRequest;
     UploadRequest.append(modIdExpand(id)).append("42"); //添加modid与功能码42
     qDebug()<<timeId;
-    QStringList timeSettings = this->timeId.split(" ");
+    QStringList timeSettings = timeId.split(" ");
     QStringList dateSettings = timeSettings.at(0).split("-");
     QStringList clockSettings = timeSettings.at(1).split(":");
     UploadRequest.append(modIdExpand(dateSettings.at(0).toInt(&ok,10)))

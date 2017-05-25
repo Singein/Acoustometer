@@ -10,7 +10,6 @@ Settings::Settings(QWidget *parent) :
     this->setMaximumSize(300,240);
     this->setMinimumSize(300,240);
     setWindowModality(Qt::ApplicationModal);
-    this->setWindowTitle("串口设置");
     ui->comboBox_Baud->setCurrentIndex(7);
     ui->comboBox_CheckBit->setCurrentIndex(2);
     ui->comboBox_StopBit->setCurrentIndex(0);
@@ -19,7 +18,7 @@ Settings::Settings(QWidget *parent) :
     serialStatus = false;
     PortScan();
     connect(ui->Button_OK,SIGNAL(clicked()),this,SLOT(returnPort()));
-    connect(ui->OpenButton,SIGNAL(clicked()),this,SLOT(connectPort()));//发送数据槽连接
+    connect(ui->OpenButton,SIGNAL(clicked()),this,SLOT(connectPort()));
 }
 
 Settings::~Settings()
@@ -27,12 +26,16 @@ Settings::~Settings()
     delete ui;
 }
 
+void Settings::setLanguage(LANG *language)
+{
+    this->language = language;
+    this->setWindowTitle(this->language->portSetting);
+}
+
 void Settings::returnPort()
 {
     emit settingChanged(port);
-    qDebug()<<"串口连接完毕，串口指针已发送";
     emit getCollectedDataList();
-    qDebug()<<"获取列表请求已发送，即将初始化树状列表";
     this->close();
 }
 
@@ -41,7 +44,7 @@ void Settings::cancel()
     this->close();
 }
 
-void Settings::PortScan()//扫描串口
+void Settings::PortScan()
 {
     ui->comboBox_Port->clear();
     QList<QSerialPortInfo> coms = QSerialPortInfo::availablePorts();
@@ -51,7 +54,7 @@ void Settings::PortScan()//扫描串口
     }
 }
 
-void Settings::connectPort()//连接串口
+void Settings::connectPort()
 {
     int baudRate = ui->comboBox_Baud->currentIndex();
     int checkBit = ui->comboBox_CheckBit->currentIndex();
@@ -110,7 +113,7 @@ void Settings::connectPort()//连接串口
             ui->comboBox_DataBit->setEnabled(false);
             ui->comboBox_Port->setEnabled(false);
             ui->comboBox_StopBit->setEnabled(false);
-            ui->OpenButton->setText("断开连接");
+            ui->OpenButton->setText(language->buttonDisConnect);
         }
     }
 
@@ -125,7 +128,7 @@ void Settings::connectPort()//连接串口
             ui->comboBox_DataBit->setEnabled(true);
             ui->comboBox_Port->setEnabled(true);
             ui->comboBox_StopBit->setEnabled(true);
-            ui->OpenButton->setText("打开串口");
+            ui->OpenButton->setText(language->buttonConnect);
         }
     }
 }

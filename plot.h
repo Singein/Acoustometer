@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <qcustomplot.h>
 #include <QVector>
+#include <lang.h>
 
 #define STRENGTH 0
 #define FREQUENCY 1
@@ -21,13 +22,13 @@ public:
     explicit Plot(QWidget *parent = 0);
     ~Plot();
     void plotShow();
+    void setLanguage(LANG *language);
 
 private:
     Ui::Plot *ui;
     QList<double> f;
     QList<double> s;
     QCustomPlot *plot;
-//    QCustomPlot *plot_f;
     QCPGraph *graph_s;
     QCPGraph *graph_f;
     double startTime;
@@ -35,6 +36,7 @@ private:
     int dataCount;
     void graphInit(QCPGraph *graph,QCustomPlot *plot,int type);
     void viewInit();
+    LANG *language;
 
 
 

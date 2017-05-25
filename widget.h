@@ -70,6 +70,7 @@ private:
 
 signals:
      void orders(int order,int id);
+     void orders(int id,QString time);
      void getInstanceBuff(QString id);
      void saveAsCsv(QStringList s,QString id);
      void plotData(QStringList s,QString title);

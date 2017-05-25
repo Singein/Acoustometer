@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QButtonGroup>
 #include <portagent.h>
+#include <lang.h>
 
 namespace Ui {
 class DeviceParameter;
@@ -20,12 +21,13 @@ public:
     ~DeviceParameter();
     void setDeviceID(int id);
     void sentAgent(PortAgent *agent);
-
+    void setLanguage(LANG *language);
 
 private:
     Ui::DeviceParameter *ui;
     int device_ID;
     PortAgent *Agent;
+    LANG *language;
 
 signals:
     void DeviceParameterChanged(QString s);

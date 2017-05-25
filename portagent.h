@@ -29,16 +29,12 @@ public:
     DataSaver *DS;
     QMap<QString,int>* map;
     void Set_Settings(QString Settings);//设置下位机即将要应用的参数
-    void Set_timeId(QString TimeId);//设置下位机要获取的历史数据时间点
     void setPort(QSerialPort *P);
     bool isStarted;
     int  getT();
     void setMap(QMap<QString,int>* Map);
-    QString timeId; //格式 170227112140
     bool isDataRecived;
     QQueue<QString> orderList;
-
-
 
 private:
     int T;
@@ -50,7 +46,7 @@ private:
     QString Order_Change_Settings(int id);//更改下位机参数指令
     QString Order_Get_Device_List(int id);//获取时间组列表数据
     QString Order_Get_Time_Point(int id);//获取某一id的时间点数据
-    QString Order_Upload_History_Data(int id);//获取某一特定编号的时间组数据
+    QString Order_Upload_History_Data(int id,QString time);//获取某一特定编号的时间组数据
     QString Order_Read_Instance_Data(int id);//获取实时数据
     void Order_Start_Read_Instance(int id);//开始采集
     void Order_Stop_Read_Instance(int id);//停止采集
@@ -69,10 +65,6 @@ private:
     QString zero;
     bool ok;
 
-
-    //    QString Error_Data(QByteArray* rec);
-    //    QStringList *IDLIST;
-
 signals:
     taskFinished(int order,QString s);
     addTreeNode(QStringList s);
@@ -87,6 +79,7 @@ signals:
 
 public slots:
     void GiveOrders(int order,int id);
+    void GiveOrders(int id,QString time);
     void OrderExcuted();
     void fakeTimerSlot(int order,int id);
     void SendOrders();
