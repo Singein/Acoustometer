@@ -18,6 +18,7 @@ Settings::Settings(QWidget *parent) :
     serialStatus = false;
     PortScan();
     connect(ui->Button_OK,SIGNAL(clicked()),this,SLOT(returnPort()));
+    connect(ui->ScanButton,SIGNAL(clicked()),this,SLOT());
     connect(ui->OpenButton,SIGNAL(clicked()),this,SLOT(connectPort()));
 }
 
@@ -30,6 +31,10 @@ void Settings::setLanguage(LANG *language)
 {
     this->language = language;
     this->setWindowTitle(this->language->portSetting);
+}
+
+void Settings::scanPort(){
+    PortScan();
 }
 
 void Settings::returnPort()

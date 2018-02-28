@@ -207,6 +207,13 @@
       </spacer>
      </item>
      <item>
+      <widget class="QPushButton" name="ScanButton">
+       <property name="text">
+        <string>扫描串口</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="OpenButton">
        <property name="text">
         <string>打开串口</string>

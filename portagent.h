@@ -54,12 +54,14 @@ private:
     QStringList Raw_Data_TimePoint(QByteArray* rec);//历史数据组列表处理方法
     QStringList Raw_Data_History(QByteArray* rec);//某一编号时间组数据处理方法
     QStringList Raw_Data_Settings(QByteArray* rec);//下位机当前参数数据处理方法
-    QStringList* Raw_Data_ID(QByteArray* rec);//下位机ID   
+    QString Raw_Data_ID(QByteArray* rec);//下位机ID
+    int Raw_Data_FalseMessage(QByteArray* rec);//下位机错误信息反馈处理方法
     void Data_Instance(QByteArray rec);
     void Data_History(QByteArray rec);
     void Data_TimePoint(QByteArray rec);
     void Data_Settings(QByteArray rec);
     void Data_ID(QByteArray rec);
+    void Data_FalseMessage(QByteArray rec);
     QString expand(QString unexpand);
     QString modIdExpand(int id);
     QString zero;
@@ -71,9 +73,11 @@ signals:
     fillTable(QStringList s);
     readInstanceData(QStringList data);
     addPlotNode(double x,double y,QString id);
+    addDeviceId(QString id); //for init
     writeCsv(QStringList s,QString id);
     deviceParameter(QStringList settings);
     fakeTimer(int order,int id);
+    falseMessage(int kind);
     send();
     connectError();
 

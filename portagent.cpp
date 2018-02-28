@@ -103,47 +103,27 @@ void PortAgent::OrderExcuted()
 
     int Flag = data.mid(1,1).toHex().toInt(&ok,16);
 //    if(crc!=crcCheck){
-//        switch (Flag) {
-//        case 3:
-//            while(len<9){
-//                data.append(port->readAll());
-//                len = data.length();
-//            }
-//            break;
-//        case 65:
-//            while((len-4)%7!=0){
-//                data.append(port->readAll());
-//                len = data.length();
-//            }
-//            break;
-//        case 66:
-//            while((len-12)%4!=0){
-//                data.append(port->readAll());
-//                len = data.length();
-//            }
-//            break;
-//        default:
-//            break;
-//        }
-
 //        crc = data.mid(len-2,2).toHex().toUpper();
 //        crcCheck = crcg->crcChecksix(data.mid(0,len-2).toHex());
 //    }
-
 
     if(data.length()!=0)
     {
         qDebug()<<"data recived --> "<<data.toHex()<<"\ndata length: "<<data.length()<<" bytes"<<" time:"<<timer->remainingTime();
         switch(Flag)
         {
-            case 2: Data_ID(data);
+            //case 2: Data_ID(data);
             case 3: if(len>9)
                         Data_Settings(data);
                     else
                         Data_Instance(data);break;
             case 65:Data_TimePoint(data);break;
             case 66: Data_History(data);break;
-
+            case 193:Data_ID(data);break;
+            case 194:
+            case 195:
+            case 198:
+                Data_FalseMessage(data);break;
         }
         isDataRecived = true;
         timer->stop();
@@ -355,7 +335,7 @@ QStringList PortAgent::Raw_Data_TimePoint(QByteArray* rec)
     QString timeData;
     timeTable.append(QString::number(modid));
     for(int i = 0;i < len;i++){
-        timeData = QString("%1-%2-%3 %4:%5:%6 %7")
+        timeData = QString("%1-%2-%3 %4:%5:%6 (%7)")
                 .arg(QString::number(noCRCData.mid(2+7*i,1).toHex().toInt(&ok,16),10))
                 .arg(QString::number(noCRCData.mid(3+7*i,1).toHex().toInt(&ok,16),10))
                 .arg(QString::number(noCRCData.mid(4+7*i,1).toHex().toInt(&ok,16),10))
@@ -450,10 +430,16 @@ QStringList PortAgent::Raw_Data_Settings(QByteArray* rec)
     return settings;
 }
 
-QStringList* PortAgent::Raw_Data_ID(QByteArray *rec)
+QString PortAgent::Raw_Data_ID(QByteArray *rec)
 {
-//    QString id = QString::number(rec->mid(2,1).toHex().toInt(&ok,16));
-//    return IDLIST;
+    QString id = QString::number(rec->mid(0,1).toHex().toInt(&ok,16));
+    return id;
+}
+
+int PortAgent::Raw_Data_FalseMessage(QByteArray *rec){
+    QString id = QString::number(rec->mid(0,1).toHex().toInt(&ok,16));
+    int wrongFun = rec->mid(1,1).toHex().toInt(&ok,16);
+    return wrongFun;
 }
 
 void PortAgent::Data_Instance(QByteArray data)
@@ -489,12 +475,14 @@ void PortAgent::Data_Settings(QByteArray data)
     emit deviceParameter(Raw_Data_Settings(&data));
 }
 
-void PortAgent::Data_ID(QByteArray rec)
+void PortAgent::Data_ID(QByteArray data)
 {
-
+    emit addDeviceId(Raw_Data_ID(&data));
 }
 
-
+void PortAgent::Data_FalseMessage(QByteArray data){
+    emit falseMessage(Raw_Data_FalseMessage(&data));
+}
 
 //--------------------以下是错误处理------------------------------
 //QString PortAgent::Error_Data(QByteArray* rec){

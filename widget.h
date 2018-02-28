@@ -49,6 +49,7 @@ private:
      QAction *action_port_setting;//串口的设置菜单
      QAction *action_device_setting;//设备的参数设置菜单
      QAction *action_start_stop_All;//用来一键开启或关闭所有设备的菜单
+     QAction *action_device_getHistoryData;//用来获取历史数据
      Settings *portSettingDialog;//串口设置的窗口
      DeviceParameter *deviceSettingDialog;//参数设置窗口
      Plot *plotDialog;
@@ -79,6 +80,7 @@ signals:
 
 private slots:
      void initTree(QStringList nodes);//初始化树状列表
+     void initTreePart(QString id); //初始化树状列表id
      void fill_table_all(QStringList s);//一整张表填充
      void on_treeView_customContextMenuRequested(const QPoint &pos);//右键菜单
      void port_setting_changed(QSerialPort *Port);//串口设置改变
@@ -94,8 +96,11 @@ private slots:
      void set_progressBar_value(double i);
      void plot_dialog_show();
      void connectError();
+     void messageError(int m);
      //     void start_stop_all();
      //     void read_history_data(QString s);//读取历史数据
+     void setDeviceId(QString id);
+     void getHistoryData();
 
 };
 

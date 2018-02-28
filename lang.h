@@ -25,6 +25,10 @@ public:
     QString warringInfo;//请先停止正在采集的实时数据! Please stop sampling the realtime data first!
     QString connectError;//连接错误 Connect Error
     QString connectErrorInfo;//与下位机连接异常! Can not connect to the device!
+    QString messageError;
+    QString messageErrorInfoAddress;
+    QString messageErrorInfoData;
+    QString messageErrorInfoBusy;
 
     QString buttonPlot;//二维曲线 2D-Plot
     QString buttonStart;//开始采集 Start
@@ -32,6 +36,8 @@ public:
     QString buttonExport;//导出 Export
     QString buttonConnect;
     QString buttonDisConnect;
+
+    QString getHistoryData;
 
 
     QString tableTitleDateTime;// 日期/时间  DateTime

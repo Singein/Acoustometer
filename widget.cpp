@@ -31,13 +31,17 @@ Widget::Widget(QWidget *parent) :
     connect(ui->Button_start,SIGNAL(clicked()),this,SLOT(start_and_stop_collecting()));//实时数据采集 点击开始采集按钮后触发
     connect(ui->Button_import,SIGNAL(clicked()),this,SLOT(export_to_excel()));
     connect(ui->Button_plot,SIGNAL(clicked()),this,SLOT(plot_dialog_show()));
+    //connect(ui->Button_getHisPoint,SIGNAL(clicked()),this,SLOT(getHistoryData()));
     connect(ui->treeView,SIGNAL(clicked(QModelIndex)),this,SLOT(current_index_changed(QModelIndex)));//当树状列表上的节点被点击后触发，用来限定操作逻辑
     connect(portAgent,SIGNAL(addTreeNode(QStringList)),this,SLOT(initTree(QStringList)));//当有列表数据收到后触发
+    //connect(portAgent,SIGNAL(addDeviceId(QString)),this,SLOT(setDeviceId(QString)));
+    connect(portAgent,SIGNAL(addDeviceId(QString)),this,SLOT(initTreePart(QString)));//仅收到列表部分数据后触发
     connect(portAgent,SIGNAL(readInstanceData(QStringList)),this,SLOT(update_instance_data(QStringList)));//更新当前的实时数据
     connect(portAgent,SIGNAL(fillTable(QStringList)),this,SLOT(fill_table_all(QStringList)));
     connect(portAgent->DS,SIGNAL(readyRead(QStringList)),this,SLOT(read_csv(QStringList)));
     connect(portAgent->DS->excel,SIGNAL(current_progress(double)),this,SLOT(set_progressBar_value(double)));
     connect(portAgent,SIGNAL(connectError()),this,SLOT(connectError()));
+    connect(portAgent,SIGNAL(falseMessage(int)),this,SLOT(messageError(int)));
     connect(this,SIGNAL(saveAsCsv(QStringList,QString)),portAgent->DS,SLOT(exportExcel(QStringList,QString)));
     connect(this,SIGNAL(orders(int,int)),portAgent,SLOT(GiveOrders(int,int)),Qt::QueuedConnection);
     connect(this,SIGNAL(orders(int,QString)),portAgent,SLOT(GiveOrders(int,QString)),Qt::QueuedConnection);
@@ -73,6 +77,14 @@ void Widget::connectError()
 {
     QMessageBox::warning(this,language->connectError,language->connectErrorInfo);
     this->portAgent->orderList.clear();
+}
+
+void Widget::messageError(int id){
+    switch(id){
+        case 194:QMessageBox::warning(this,language->messageError,language->messageErrorInfoAddress);break;
+        case 195:QMessageBox::warning(this,language->messageError,language->messageErrorInfoData);break;
+        case 198:QMessageBox::warning(this,language->messageError,language->messageErrorInfoBusy);break;
+    }
 }
 
 void Widget::current_index_changed(QModelIndex currentIndex)
@@ -192,17 +204,23 @@ void Widget::current_index_changed(QModelIndex currentIndex)
 }
 
 void Widget::initTree(QStringList nodes)
-{   int index;
+{
+    int index;
+    for(index = 0;index<devices->rowCount();index++){
+        devices->removeRow(index);
+    }
+
     for(index=0;index<devices->rowCount();index++)
         if(devices->child(index)->text().contains(nodes.at(0)))
             break;
+
     if((index==devices->rowCount()-1&&index!=0)||devices->rowCount()==0)
     {
         QStandardItem *device = new QStandardItem(language->device+" "+nodes.at(0));
         map.insert(nodes.at(0),0);
         QStandardItem *instance_data = new QStandardItem(language->realTimeData);
         QStandardItem *history_data = new QStandardItem(language->historyData);
-        device->setEditable(false);
+        device->setEditable(true);
         instance_data->setEditable(false);
         history_data->setEditable(false);
         for(int i = 1;i < nodes.length();i++)
@@ -218,6 +236,26 @@ void Widget::initTree(QStringList nodes)
         model->appendRow(devices);//刷新modle
         ui->treeView->setModel(model);//刷新treeview
     }
+}
+
+/**
+ * @brief Widget::initTreePart
+ * 当下位机不存在历史数据节点时触发
+ */
+
+void Widget::initTreePart(QString id){
+    int index;
+    for(index = 0;index<devices->rowCount();index++){
+        devices->removeRow(index);
+    }
+    QStandardItem *device = new QStandardItem(language->device+" "+id);
+    QStandardItem *instance_data = new QStandardItem(language->realTimeData);
+    device->setEditable(false);
+    instance_data->setEditable(false);
+    device->appendRow(instance_data);
+    devices->appendRow(device);
+    model->appendRow(devices);//刷新model
+    ui->treeView->setModel(model);//刷新treeview
 }
 
 void Widget::initTable()
@@ -347,9 +385,11 @@ void Widget::on_treeView_customContextMenuRequested(const QPoint &pos)
     QStandardItem *currentItem = model->itemFromIndex(currentIndex);
     action_port_setting = new QAction(language->portSetting);
     action_device_setting = new QAction(language->deviceSetting);
+    action_device_getHistoryData = new QAction(language->getHistoryData);
     action_start_stop_All = new QAction;
     connect(action_port_setting,SIGNAL(triggered(bool)),this,SLOT(port_setting_Dialog_Show()));
     connect(action_device_setting,SIGNAL(triggered(bool)),this,SLOT(device_setting_Dialog_Show()));
+    connect(action_device_getHistoryData,SIGNAL(triggered(bool)),this,SLOT(getHistoryData()));
 //    connect(action_start_stop_All,SIGNAL(triggered(bool)),this,SLOT(start_stop_all()));
     if(currentItem->text() == language->deviceList)
     {
@@ -379,6 +419,7 @@ void Widget::on_treeView_customContextMenuRequested(const QPoint &pos)
         ui->Button_plot->hide();
         QMenu *popMenu =new QMenu(this);//定义一个右键弹出菜单
         popMenu->addAction(action_device_setting);//往菜单内添加QAction
+        popMenu->addAction(action_device_getHistoryData);
         popMenu->exec(QCursor::pos());//弹出右键菜单，菜单位置为光标位置
     }
 
@@ -525,8 +566,13 @@ bool Widget::isInstanceDataCollecting()
     return false;
 }
 
+void Widget::setDeviceId(QString id){
+    qDebug()<<"id:"<<id;
+}
 
-
+void Widget::getHistoryData(){
+    emit orders(ORDER_GET_DEVICE_LIST,get_device_id());
+}
 
 
 

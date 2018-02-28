@@ -22,6 +22,10 @@ void LANG::init()
         warringInfo = "请先停止正在采集的实时数据!";//请先停止正在采集的实时数据! Please stop sampling the realtime data first!
         connectError = "连接错误";//连接错误 Connect Error
         connectErrorInfo = "与下位机连接异常!";//与下位机连接异常! Can not connect to the device!
+        messageError = "反馈信息错误";
+        messageErrorInfoAddress = "错误地址";
+        messageErrorInfoData = "错误数据";
+        messageErrorInfoBusy = "设备正忙";
         buttonPlot = "二维曲线";//二维曲线 2D-Plot
         buttonStart = "开始采集";//开始采集 Start
         buttonStop = "停止采集";//停止采集 Stop
@@ -33,6 +37,7 @@ void LANG::init()
         tableTitleFrequency = "频率(KHz)";// 频率    Frequency
         exporting = "正在导出数据...";
         selection = "当前选中: ";
+        getHistoryData = "获取历史数据";
         break;
     case ENGLISH:
         applicationTitle = "Acoustometer";
@@ -47,6 +52,10 @@ void LANG::init()
         warringInfo = "Please stop sampling the realtime data first!";//请先停止正在采集的实时数据! Please stop sampling the realtime data first!
         connectError = "Connect Error";//连接错误 Connect Error
         connectErrorInfo = "Can not connect to the device!";//与下位机连接异常! Can not connect to the device!
+        messageError = "Message Error";//通讯异常
+        messageErrorInfoAddress = "Wrong Register Address";
+        messageErrorInfoData = "Wrong Data";
+        messageErrorInfoBusy = "Device is busy";
         buttonPlot = "2D-Plot";//二维曲线 2D-Plot
         buttonStart = "Start";//开始采集 Start
         buttonStop = "Stop";//停止采集 Stop
@@ -58,6 +67,7 @@ void LANG::init()
         tableTitleFrequency = "Frequency(KHz)";// 频率    Frequency
         exporting = "exporting...";
         selection = "selection: ";
+        getHistoryData = "Get History Data";
         break;
     default:
         break;
